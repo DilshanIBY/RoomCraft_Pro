@@ -287,6 +287,35 @@ export function CustomerDashboard() {
         </div>
       </motion.div>
 
+      {/* Style Quiz CTA */}
+      {(() => {
+        const quizData = localStorage.getItem('rc_style_quiz');
+        const quizResults = quizData ? JSON.parse(quizData) : null;
+        return (
+          <motion.div
+            className="glass-card"
+            style={{ padding: 'var(--space-5)', marginBottom: 'var(--space-8)', display: 'flex', alignItems: 'center', gap: 'var(--space-5)', cursor: 'pointer' }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            onClick={() => navigate('/style-quiz')}
+          >
+            <div style={{ width: 48, height: 48, background: 'var(--gradient-gold)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Sparkles size={22} color="#1A1210" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--text-sm)', fontWeight: 600, marginBottom: 'var(--space-1)' }}>
+                {quizResults ? '✨ Your Style: ' + (quizResults.style === 'modern' ? 'Modern' : quizResults.style === 'classic' ? 'Classic' : quizResults.style === 'scandinavian' ? 'Scandinavian' : 'Industrial') : 'Discover Your Style'}
+              </h3>
+              <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
+                {quizResults ? 'Take the quiz again to update your preferences.' : 'Take our 5-question style quiz to get personalized recommendations.'}
+              </p>
+            </div>
+            <ArrowRight size={18} style={{ color: 'var(--accent-gold)' }} />
+          </motion.div>
+        );
+      })()}
+
       {/* My Designs */}
       <h2 style={{ fontSize: 'var(--text-xl)', marginBottom: 'var(--space-5)' }}>My Designs</h2>
       <div className="designs-grid" style={{ marginBottom: 'var(--space-8)' }}>

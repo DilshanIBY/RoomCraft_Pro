@@ -4,7 +4,7 @@
 // ═══════════════════════════════════════════════════════════
 
 import { db } from './db';
-import type { Profile, FurnitureItem, Design } from './db';
+import type { Profile, FurnitureItem, Design, RoomTemplate } from './db';
 
 // ─── SHA-256 hash utility ───
 async function hashPassword(password: string): Promise<string> {
@@ -195,12 +195,66 @@ export async function seedDatabase(): Promise<void> {
     },
   ];
 
+  // ─── Room Templates (FR-ROOM-07) ───
+  const roomTemplates: RoomTemplate[] = [
+    {
+      id: uuid(), name: 'Living Room Standard',
+      description: 'Classic rectangular living room — perfect for sofas, coffee tables, and entertainment.',
+      icon: '🛋️',
+      roomConfig: { shape: 'rectangular', width: 5, depth: 4, height: 2.8, wallColor: '#F5F0EB', floorType: 'hardwood', floorColor: '#A0522D' },
+      tags: ['living', 'standard'],
+    },
+    {
+      id: uuid(), name: 'Master Bedroom',
+      description: 'Spacious bedroom with room for a king-size bed, nightstands, and dresser.',
+      icon: '🛌',
+      roomConfig: { shape: 'rectangular', width: 4.5, depth: 4, height: 2.7, wallColor: '#E8E4DE', floorType: 'carpet', floorColor: '#D4B896' },
+      tags: ['bedroom', 'master'],
+    },
+    {
+      id: uuid(), name: 'Home Office',
+      description: 'Compact study with room for a desk, chair, bookshelf, and task lighting.',
+      icon: '📚',
+      roomConfig: { shape: 'rectangular', width: 3.5, depth: 3, height: 2.6, wallColor: '#FFFDF9', floorType: 'hardwood', floorColor: '#8B6914' },
+      tags: ['office', 'study'],
+    },
+    {
+      id: uuid(), name: 'Kitchen & Dining',
+      description: 'Open kitchen with space for a dining table and chairs.',
+      icon: '🍽️',
+      roomConfig: { shape: 'rectangular', width: 5, depth: 3.5, height: 2.7, wallColor: '#FFF8EB', floorType: 'tile', floorColor: '#FAF7F2' },
+      tags: ['kitchen', 'dining'],
+    },
+    {
+      id: uuid(), name: 'Studio Apartment',
+      description: 'All-in-one studio space — living, sleeping, and working in one room.',
+      icon: '🏠',
+      roomConfig: { shape: 'studio', width: 6, depth: 5, height: 2.8, wallColor: '#F5F0EB', floorType: 'hardwood', floorColor: '#D2B48C' },
+      tags: ['studio', 'apartment'],
+    },
+    {
+      id: uuid(), name: 'L-Shaped Living Suite',
+      description: 'Versatile L-shaped room — ideal for conversation areas and reading nooks.',
+      icon: '🔲',
+      roomConfig: { shape: 'l-shaped', width: 6, depth: 5, height: 2.8, wallColor: '#E8E4DE', floorType: 'hardwood', floorColor: '#A0522D' },
+      tags: ['l-shaped', 'living'],
+    },
+    {
+      id: uuid(), name: 'Open Plan Loft',
+      description: 'Expansive open-plan space — great for large furniture and entertaining.',
+      icon: '🏢',
+      roomConfig: { shape: 'open-plan', width: 8, depth: 6, height: 3.2, wallColor: '#D4C5A9', floorType: 'hardwood', floorColor: '#5C3317' },
+      tags: ['open-plan', 'loft'],
+    },
+  ];
+
   // ─── Seed All ───
-  await db.transaction('rw', [db.profiles, db.furnitureItems, db.designs], async () => {
+  await db.transaction('rw', [db.profiles, db.furnitureItems, db.designs, db.roomTemplates], async () => {
     await db.profiles.bulkAdd(profiles);
     await db.furnitureItems.bulkAdd(furnitureItems);
     await db.designs.bulkAdd(designs);
+    await db.roomTemplates.bulkAdd(roomTemplates);
   });
 
-  console.log('✅ Database seeded with 3 profiles, 12 furniture items, 2 sample designs');
+  console.log('✅ Database seeded with 3 profiles, 12 furniture items, 2 sample designs, 7 room templates');
 }

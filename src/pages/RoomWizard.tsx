@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Check, Sparkles } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { db } from '../db/db';
-import type { RoomShape, FloorType } from '../db/db';
+import type { RoomShape, FloorType, RoomTemplate } from '../db/db';
 
 import shapeRectangular from '../assets/images/shapes/shape-rectangular.png';
 import shapeLShaped from '../assets/images/shapes/shape-l-shaped.png';
@@ -45,8 +45,24 @@ export default function RoomWizard() {
   const [wc, setWc] = useState('#F5F0EB');
   const [ft, setFt] = useState<FloorType>('hardwood');
   const [fc, setFc] = useState('#A0522D');
+  const [templates, setTemplates] = useState<RoomTemplate[]>([]);
   const labels = ['Shape','Dimensions','Style','Review'];
   const sv = { enter:{opacity:0,x:40}, center:{opacity:1,x:0}, exit:{opacity:0,x:-40} };
+
+  useEffect(() => {
+    db.roomTemplates.toArray().then(setTemplates);
+  }, []);
+
+  const applyTemplate = (t: RoomTemplate) => {
+    setShape(t.roomConfig.shape);
+    setW(t.roomConfig.width);
+    setD(t.roomConfig.depth);
+    setH(t.roomConfig.height);
+    setWc(t.roomConfig.wallColor);
+    setFt(t.roomConfig.floorType);
+    setFc(t.roomConfig.floorColor);
+    setStep(3); // Jump to review
+  };
 
   const finish = async () => {
     const room = { shape,width:w,depth:d,height:h,wallColor:wc,floorType:ft,floorColor:fc };
@@ -79,7 +95,7 @@ export default function RoomWizard() {
         <AnimatePresence mode="wait">
           {step===0&&(
             <motion.div key="s0" className="wizard-content" variants={sv} initial="enter" animate="center" exit="exit" transition={{duration:0.25}}>
-              <h2>Choose Room Shape</h2><p>Select the layout that best matches your space.</p>
+              <h2>Choose Room Shape</h2><p>Select the layout that best matches your space, or pick a template below.</p>
               <div className="wizard-shapes">
                 {shapes.map(s=>(
                   <div key={s.id} className={`wizard-shape-card ${shape===s.id?'selected':''}`} onClick={()=>setShape(s.id)}>
@@ -89,6 +105,22 @@ export default function RoomWizard() {
                   </div>
                 ))}
               </div>
+              {templates.length > 0 && (
+                <div className="wizard-templates">
+                  <h3 className="wizard-templates-title">Or start from a template</h3>
+                  <div className="wizard-template-grid">
+                    {templates.map(t => (
+                      <div key={t.id} className="wizard-template-card glass-card" onClick={() => applyTemplate(t)}>
+                        <span className="wizard-template-icon">{t.icon}</span>
+                        <div className="wizard-template-info">
+                          <h4>{t.name}</h4>
+                          <p>{t.roomConfig.width}m × {t.roomConfig.depth}m · {t.roomConfig.shape}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
           {step===1&&(

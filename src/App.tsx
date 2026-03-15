@@ -14,6 +14,9 @@ import DashboardLayout, { DesignerDashboard, CustomerDashboard, AdminDashboard }
 import RoomWizard from './pages/RoomWizard';
 import DesignerWorkspace from './pages/DesignerWorkspace';
 import SettingsPage from './pages/SettingsPage';
+import CataloguePage from './pages/CataloguePage';
+import MyDesignsPage from './pages/MyDesignsPage';
+import StyleQuizPage from './pages/StyleQuizPage';
 
 // ─── Protected Route ───
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) {
@@ -70,10 +73,11 @@ function AppContent() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/room-wizard" element={<ProtectedRoute><RoomWizard /></ProtectedRoute>} />
       <Route path="/designer" element={<ProtectedRoute><DesignerWorkspace /></ProtectedRoute>} />
+      <Route path="/style-quiz" element={<ProtectedRoute><StyleQuizPage /></ProtectedRoute>} />
       <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
         <Route path="/dashboard" element={<DashboardRouter />} />
-        <Route path="/catalogue" element={<div style={{ padding: 'var(--space-8)' }}><h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-3xl)' }}>Catalogue</h1><p className="text-secondary">Full catalogue browser — coming soon.</p></div>} />
-        <Route path="/designs" element={<div style={{ padding: 'var(--space-8)' }}><h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-3xl)' }}>My Designs</h1><p className="text-secondary">All saved designs — coming soon.</p></div>} />
+        <Route path="/catalogue" element={<CataloguePage />} />
+        <Route path="/designs" element={<MyDesignsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/admin/*" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
       </Route>

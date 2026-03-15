@@ -83,12 +83,30 @@ export interface Enquiry {
   createdAt: Date;
 }
 
+export interface RoomTemplate {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  roomConfig: {
+    shape: RoomShape;
+    width: number;
+    depth: number;
+    height: number;
+    wallColor: string;
+    floorType: FloorType;
+    floorColor: string;
+  };
+  tags: string[];
+}
+
 class RoomCraftDB extends Dexie {
   profiles!: Table<Profile>;
   designs!: Table<Design>;
   furnitureItems!: Table<FurnitureItem>;
   wishlists!: Table<WishlistItem>;
   enquiries!: Table<Enquiry>;
+  roomTemplates!: Table<RoomTemplate>;
 
   constructor() {
     super('RoomCraftPro');
@@ -98,6 +116,7 @@ class RoomCraftDB extends Dexie {
       furnitureItems: 'id, category, style, name',
       wishlists: 'id, userId, itemId, [userId+itemId]',
       enquiries: 'id, userId, designId, status',
+      roomTemplates: 'id, name',
     });
   }
 }
