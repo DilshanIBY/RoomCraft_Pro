@@ -8,13 +8,20 @@ import { motion } from 'framer-motion';
 import {
   Boxes, LayoutDashboard, Compass, FolderOpen, Settings,
   LogOut, Users, BarChart3, Sun, Moon, Plus, Search,
-  Armchair, Clock, Sparkles, ArrowRight,
+  Armchair, Clock, Sparkles, ArrowRight, Trash2,
 } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useAppStore } from '../store/useAppStore';
 import { useEffect, useState } from 'react';
 import { db } from '../db/db';
 import type { Design, FurnitureItem } from '../db/db';
+import dashboardHero from '../assets/images/dashboard-hero.png';
+import designPlaceholder from '../assets/images/design-placeholder.png';
+
+const categoryEmoji: Record<string, string> = {
+  chair: '🪑', dining_table: '🍽️', side_table: '☕', sofa: '🛋️',
+  lamp: '💡', shelf: '📚', decor: '🌿',
+};
 
 // ─── Sidebar Layout ───
 export default function DashboardLayout() {
@@ -193,10 +200,20 @@ export function DesignerDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 + i * 0.05 }}
-            onClick={() => navigate('/designer')}
+            onClick={() => {
+              useAppStore.getState().loadDesign({
+                id: d.id,
+                name: d.name,
+                room: d.roomConfig,
+                furniture: d.furniture,
+                selectedItemId: null,
+              });
+              navigate('/designer');
+            }}
+            style={{cursor:'pointer'}}
           >
             <div className="design-card-thumb">
-              <Compass size={32} className="design-card-thumb-icon" />
+              <img src={designPlaceholder} alt={d.name} className="design-card-thumb-img" />
             </div>
             <div className="design-card-info">
               <div className="design-card-name">{d.name}</div>
@@ -207,6 +224,21 @@ export function DesignerDashboard() {
                 {d.furniture.length} items
               </div>
             </div>
+            <button
+              className="btn btn-icon btn-ghost btn-sm"
+              style={{position:'absolute',top:8,right:8,opacity:0.6}}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (confirm(`Delete "${d.name}"?`)) {
+                  db.designs.delete(d.id).then(() => {
+                    setDesigns(prev => prev.filter(dd => dd.id !== d.id));
+                  });
+                }
+              }}
+              title="Delete design"
+            >
+              <Trash2 size={14} />
+            </button>
           </motion.div>
         ))}
       </div>
@@ -238,16 +270,21 @@ export function CustomerDashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <span className="badge badge-gold" style={{ marginBottom: 'var(--space-3)', display: 'inline-flex' }}>👋 Welcome back</span>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-3xl)', marginBottom: 'var(--space-3)' }}>
-          Design Your Perfect Room
-        </h1>
-        <p style={{ color: 'var(--text-secondary)', maxWidth: 500, marginBottom: 'var(--space-6)' }}>
-          Start with our guided wizard to set up your room, then drag and drop furniture to create your dream space.
-        </p>
-        <button className="btn btn-gold btn-lg" onClick={() => navigate('/room-wizard')}>
-          Start Designing <ArrowRight size={18} />
-        </button>
+        <div className="customer-hero-content">
+          <span className="badge badge-gold" style={{ marginBottom: 'var(--space-3)', display: 'inline-flex' }}>👋 Welcome back</span>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-3xl)', marginBottom: 'var(--space-3)' }}>
+            Design Your Perfect Room
+          </h1>
+          <p style={{ color: 'var(--text-secondary)', maxWidth: 500, marginBottom: 'var(--space-6)' }}>
+            Start with our guided wizard to set up your room, then drag and drop furniture to create your dream space.
+          </p>
+          <button className="btn btn-gold btn-lg" onClick={() => navigate('/room-wizard')}>
+            Start Designing <ArrowRight size={18} />
+          </button>
+        </div>
+        <div className="customer-hero-image">
+          <img src={dashboardHero} alt="Beautiful room design" />
+        </div>
       </motion.div>
 
       {/* My Designs */}
@@ -258,7 +295,21 @@ export function CustomerDashboard() {
           <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 'var(--text-sm)' }}>New Room</span>
         </div>
         {designs.map(d => (
-          <div key={d.id} className="glass-card design-card" onClick={() => navigate('/designer')}>
+          <div
+            key={d.id}
+            className="glass-card design-card"
+            style={{cursor:'pointer',position:'relative'}}
+            onClick={() => {
+              useAppStore.getState().loadDesign({
+                id: d.id,
+                name: d.name,
+                room: d.roomConfig,
+                furniture: d.furniture,
+                selectedItemId: null,
+              });
+              navigate('/designer');
+            }}
+          >
             <div className="design-card-thumb">
               <Compass size={32} className="design-card-thumb-icon" />
             </div>
@@ -268,6 +319,21 @@ export function CustomerDashboard() {
                 <Clock size={12} /> {new Date(d.updatedAt).toLocaleDateString()}
               </div>
             </div>
+            <button
+              className="btn btn-icon btn-ghost btn-sm"
+              style={{position:'absolute',top:8,right:8,opacity:0.6}}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (confirm(`Delete "${d.name}"?`)) {
+                  db.designs.delete(d.id).then(() => {
+                    setDesigns(prev => prev.filter(dd => dd.id !== d.id));
+                  });
+                }
+              }}
+              title="Delete design"
+            >
+              <Trash2 size={14} />
+            </button>
           </div>
         ))}
       </div>
@@ -277,8 +343,8 @@ export function CustomerDashboard() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--space-4)' }}>
         {trending.map(item => (
           <div key={item.id} className="glass-card" style={{ padding: 'var(--space-4)', textAlign: 'center' }}>
-            <div style={{ width: '100%', aspectRatio: '1', background: 'var(--gradient-wood)', borderRadius: 'var(--radius-sm)', marginBottom: 'var(--space-3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Armchair size={32} style={{ color: 'var(--text-muted)', opacity: 0.5 }} />
+            <div style={{ width: '100%', aspectRatio: '1', borderRadius: 'var(--radius-sm)', marginBottom: 'var(--space-3)', overflow: 'hidden' }}>
+              <img src={item.thumbnailUrl} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { const el = e.target as HTMLImageElement; el.style.display = 'none'; el.parentElement!.style.background = 'var(--gradient-wood)'; el.parentElement!.style.display = 'flex'; el.parentElement!.style.alignItems = 'center'; el.parentElement!.style.justifyContent = 'center'; el.parentElement!.style.fontSize = '2rem'; el.parentElement!.textContent = categoryEmoji[item.category] || '📦'; }} />
             </div>
             <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 'var(--text-sm)', marginBottom: 'var(--space-1)' }}>{item.name}</div>
             <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>

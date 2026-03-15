@@ -7,6 +7,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Boxes, Check, ArrowRight, ArrowLeft, Palette, Home } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
+import authBg from '../assets/images/auth-bg.png';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -64,7 +65,9 @@ export default function RegisterPage() {
 
   return (
     <div className="auth-page">
-      <div className="auth-bg-pattern" />
+      <div className="auth-bg-pattern">
+        <img src={authBg} alt="" className="auth-bg-image" />
+      </div>
       <motion.div
         className="glass-card auth-card"
         initial={{ opacity: 0, scale: 0.95 }}

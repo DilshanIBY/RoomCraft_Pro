@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Boxes, Palette, Eye, ArrowRight, Sun, Moon } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
+import heroRoom from '../assets/images/hero-room.png';
 
 export default function SplashPage() {
   const navigate = useNavigate();
@@ -41,30 +42,40 @@ export default function SplashPage() {
       </nav>
 
       {/* Hero */}
-      <motion.section
-        className="splash-hero"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease: [0.34, 1.56, 0.64, 1] }}
-      >
-        <span className="badge badge-gold splash-badge">✨ Premium Room Visualization</span>
-        <h1>
-          See Your Dream Room<br />
-          <span className="gold">Before It Becomes Reality</span>
-        </h1>
-        <p>
-          Design, customize, and visualize furniture placements in stunning 2D and 3D —
-          powered by an intuitive interface built for both designers and customers.
-        </p>
-        <div className="splash-cta-group">
-          <button className="btn btn-gold btn-lg" onClick={() => navigate('/login')}>
-            Start Designing <ArrowRight size={18} />
-          </button>
-          <button className="btn btn-glass btn-lg" onClick={() => navigate('/register')}>
-            Explore as Customer
-          </button>
-        </div>
-      </motion.section>
+      <section className="splash-hero splash-hero--split">
+        <motion.div
+          className="splash-hero-text"
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.7, ease: [0.34, 1.56, 0.64, 1] }}
+        >
+          <span className="badge badge-gold splash-badge">✨ Premium Room Visualization</span>
+          <h1>
+            See Your Dream Room<br />
+            <span className="gold">Before It Becomes Reality</span>
+          </h1>
+          <p>
+            Design, customize, and visualize furniture placements in stunning 2D and 3D —
+            powered by an intuitive interface built for both designers and customers.
+          </p>
+          <div className="splash-cta-group">
+            <button className="btn btn-gold btn-lg" onClick={() => navigate('/login')}>
+              Start Designing <ArrowRight size={18} />
+            </button>
+            <button className="btn btn-glass btn-lg" onClick={() => navigate('/register')}>
+              Explore as Customer
+            </button>
+          </div>
+        </motion.div>
+        <motion.div
+          className="splash-hero-image"
+          initial={{ opacity: 0, x: 30, scale: 0.95 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.2, ease: [0.34, 1.56, 0.64, 1] }}
+        >
+          <img src={heroRoom} alt="Beautiful modern living room design" />
+        </motion.div>
+      </section>
 
       {/* Features */}
       <section className="splash-features">

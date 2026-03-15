@@ -5,12 +5,13 @@ import {
   Boxes, Box, Search, Trash2, RotateCw, Move, Palette,
   ChevronLeft, ChevronRight, Sun, Moon, Magnet,
   ZoomIn, ZoomOut, Maximize2,
-  ChevronDown, GripVertical,
+  ChevronDown, GripVertical, Clock,
 } from 'lucide-react';
-import { useAppStore } from '../store/useAppStore';
+import { useAppStore, PALETTE_PRESETS } from '../store/useAppStore';
 import { db } from '../db/db';
 import type { FurnitureItem, FurnitureCategory } from '../db/db';
 import FloorPlanCanvas from '../components/FloorPlanCanvas';
+import RoomScene3D from '../components/RoomScene3D';
 
 const categories: { id: FurnitureCategory | 'all'; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -38,7 +39,10 @@ export default function DesignerWorkspace() {
     theme, toggleTheme,
     gridSize, setGridSize, snapEnabled, toggleSnap, showGrid, toggleGrid,
     moveFurniture, rotateFurniture, scaleFurniture, colorFurniture,
+    colorAllFurniture, applyShade, applyPalette,
   } = store;
+
+  const [shadeValue, setShadeValue] = useState(0.5);
 
   const [items, setItems] = useState<FurnitureItem[]>([]);
   const [search, setSearch] = useState('');
@@ -47,6 +51,9 @@ export default function DesignerWorkspace() {
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
   const [showGridMenu, setShowGridMenu] = useState(false);
   const [saveToast, setSaveToast] = useState(false);
+  const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
+  const autoSaveRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastFurnitureRef = useRef<string>('');
 
   useEffect(() => {
     db.furnitureItems.toArray().then(setItems);
@@ -64,6 +71,30 @@ export default function DesignerWorkspace() {
     ro.observe(el);
     setCanvasSize({ width: el.clientWidth, height: el.clientHeight });
     return () => ro.disconnect();
+  }, []);
+
+  // ─── Auto-save timer (FR-DES-04) ───
+  useEffect(() => {
+    if (autoSaveRef.current) clearInterval(autoSaveRef.current);
+    autoSaveRef.current = setInterval(async () => {
+      if (!currentDesign.id) return;
+      // Check if anything changed since last save
+      const currentHash = JSON.stringify(currentDesign.furniture) + JSON.stringify(currentDesign.room);
+      if (currentHash === lastFurnitureRef.current) return;
+      lastFurnitureRef.current = currentHash;
+      try {
+        await db.designs.update(currentDesign.id, {
+          furniture: currentDesign.furniture,
+          roomConfig: currentDesign.room,
+          name: currentDesign.name,
+          updatedAt: new Date(),
+        });
+        setLastAutoSave(new Date());
+      } catch (e) {
+        console.warn('Auto-save failed:', e);
+      }
+    }, 60000); // 60 seconds
+    return () => { if (autoSaveRef.current) clearInterval(autoSaveRef.current); };
   }, []);
 
   const filtered = items.filter(i => {
@@ -223,7 +254,18 @@ export default function DesignerWorkspace() {
                     title={`Drag or click to add ${item.name}`}
                   >
                     <div className="catalogue-item-drag"><GripVertical size={10} /></div>
-                    <div className="catalogue-item-thumb">{categoryEmoji[item.category]||'📦'}</div>
+                    <div className="catalogue-item-thumb">
+                      <img
+                        src={item.thumbnailUrl}
+                        alt={item.name}
+                        className="catalogue-item-thumb-img"
+                        onError={(e) => {
+                          const el = e.target as HTMLImageElement;
+                          el.style.display = 'none';
+                          el.parentElement!.textContent = categoryEmoji[item.category] || '📦';
+                        }}
+                      />
+                    </div>
                     <div className="catalogue-item-info">
                       <div className="catalogue-item-name">{item.name}</div>
                       <div className="catalogue-item-dims">{item.dimensions.width}×{item.dimensions.depth}m</div>
@@ -253,11 +295,7 @@ export default function DesignerWorkspace() {
               containerHeight={canvasSize.height}
             />
           ) : (
-            <div className="canvas-placeholder">
-              <Box size={64}/>
-              <h3>3D View</h3>
-              <p style={{fontSize:'var(--text-sm)'}}>Three.js / R3F viewport — coming in Phase 4</p>
-            </div>
+            <RoomScene3D catalogueItems={items} />
           )}
 
           {/* Canvas Toolbar */}
@@ -393,6 +431,34 @@ export default function DesignerWorkspace() {
                         <div key={c} className={`wizard-swatch ${selectedFurniture.color===c?'selected':''}`} style={{background:c,width:28,height:28}} onClick={()=>colorFurniture(selectedFurniture.id,c)}/>
                       ))}
                     </div>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      style={{marginTop:'var(--space-2)',width:'100%',fontSize:'var(--text-xs)'}}
+                      onClick={() => colorAllFurniture(selectedFurniture.color)}
+                      title="Apply this color to all furniture"
+                    >
+                      <Palette size={12}/> Apply to All Items
+                    </button>
+                  </div>
+                  <div className="properties-section">
+                    <h4>Shade / Tint</h4>
+                    <input
+                      type="range"
+                      min="0.1"
+                      max="0.9"
+                      step="0.05"
+                      value={shadeValue}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        setShadeValue(val);
+                        applyShade(selectedFurniture.id, val);
+                      }}
+                      style={{width:'100%',accentColor:'var(--accent-gold)'}}
+                    />
+                    <div style={{display:'flex',justifyContent:'space-between',fontSize:'var(--text-xs)',color:'var(--text-muted)'}}>
+                      <span>Darker</span>
+                      <span>Lighter</span>
+                    </div>
                   </div>
                   <div className="properties-section" style={{display:'flex',gap:'var(--space-2)'}}>
                     <button className="btn btn-danger btn-sm" style={{flex:1}} onClick={()=>removeFurniture(selectedFurniture.id)}><Trash2 size={14}/> Remove</button>
@@ -420,6 +486,31 @@ export default function DesignerWorkspace() {
                     <h4>Items Placed</h4>
                     <p style={{fontSize:'var(--text-2xl)',fontFamily:'var(--font-display)',fontWeight:700}}>{currentDesign.furniture.length}</p>
                   </div>
+                  <div className="properties-section">
+                    <h4><Palette size={12} style={{marginRight:4}}/> Color Palettes</h4>
+                    <div style={{display:'flex',flexDirection:'column',gap:'var(--space-2)'}}>
+                      {PALETTE_PRESETS.map(p => (
+                        <button
+                          key={p.name}
+                          className="btn btn-ghost btn-sm"
+                          style={{
+                            justifyContent:'flex-start',
+                            gap:'var(--space-2)',
+                            padding:'6px 8px',
+                            fontSize:'var(--text-xs)',
+                          }}
+                          onClick={() => applyPalette(p)}
+                        >
+                          <div style={{display:'flex',gap:2}}>
+                            {[p.wallColor, p.floorColor, ...p.furnitureColors.slice(0, 3)].map((c, i) => (
+                              <div key={i} style={{width:14,height:14,borderRadius:3,background:c,border:'1px solid var(--border-glass)'}}/>
+                            ))}
+                          </div>
+                          {p.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </>
               )}
             </>
@@ -432,7 +523,12 @@ export default function DesignerWorkspace() {
         <span>Room: {currentDesign.room.width}m × {currentDesign.room.depth}m × {currentDesign.room.height}m</span>
         <span>Items: {currentDesign.furniture.length}</span>
         <span>View: {viewMode.toUpperCase()}</span>
-        <span style={{marginLeft:'auto'}}>
+        <span style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:'var(--space-2)'}}>
+          {lastAutoSave && (
+            <span className="status-badge" style={{display:'flex',alignItems:'center',gap:3}}>
+              <Clock size={9}/> Saved {Math.round((Date.now() - lastAutoSave.getTime()) / 1000)}s ago
+            </span>
+          )}
           {snapEnabled && <span className="status-badge status-badge-gold">Snap</span>}
           {showGrid && <span className="status-badge">Grid {gridSize}m</span>}
           Shape: {currentDesign.room.shape}

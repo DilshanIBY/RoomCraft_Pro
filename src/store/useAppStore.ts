@@ -6,6 +6,53 @@
 import { create } from 'zustand';
 import type { RoomShape, FloorType, PlacedFurniture, FurnitureItem } from '../db/db';
 
+// ─── Color Palette Presets (FR-COLOR-05) ───
+export interface PalettePreset {
+  name: string;
+  wallColor: string;
+  floorColor: string;
+  furnitureColors: string[];
+  accent: string;
+}
+
+export const PALETTE_PRESETS: PalettePreset[] = [
+  {
+    name: 'Modern Neutral',
+    wallColor: '#F5F0EB',
+    floorColor: '#A0522D',
+    furnitureColors: ['#4A4A4A', '#2C1810', '#8B7355', '#F5F0EB', '#C49A3C'],
+    accent: '#C49A3C',
+  },
+  {
+    name: 'Scandinavian',
+    wallColor: '#FFFDF9',
+    floorColor: '#D4B896',
+    furnitureColors: ['#F5F0EB', '#D4B896', '#B8A88A', '#FFFFFF', '#87CEEB'],
+    accent: '#87CEEB',
+  },
+  {
+    name: 'Industrial',
+    wallColor: '#E8E0D4',
+    floorColor: '#8B8682',
+    furnitureColors: ['#4A4A4A', '#2C2C2C', '#8B8682', '#A0522D', '#D97706'],
+    accent: '#D97706',
+  },
+  {
+    name: 'Warm Terracotta',
+    wallColor: '#FFF3E8',
+    floorColor: '#C67B4B',
+    furnitureColors: ['#C67B4B', '#A0522D', '#8B6914', '#2D6B4F', '#F5F0EB'],
+    accent: '#C67B4B',
+  },
+  {
+    name: 'Bold Emerald',
+    wallColor: '#F0F5F2',
+    floorColor: '#2C1810',
+    furnitureColors: ['#2D6B4F', '#1A365D', '#C49A3C', '#4A4A4A', '#8B6914'],
+    accent: '#2D6B4F',
+  },
+];
+
 interface RoomConfig {
   shape: RoomShape;
   width: number;
@@ -76,6 +123,11 @@ interface AppState {
   undo: () => void;
   redo: () => void;
   pushSnapshot: () => void;
+
+  // ─── Color Batch Actions (FR-COLOR-03, 04, 05) ───
+  colorAllFurniture: (color: string) => void;
+  applyShade: (id: string, lightness: number) => void;
+  applyPalette: (palette: PalettePreset) => void;
 }
 
 const defaultRoom: RoomConfig = {
@@ -279,4 +331,79 @@ export const useAppStore = create<AppState>((set, get) => ({
       },
     };
   }),
+
+  // ─── Color Batch (FR-COLOR-03) ───
+  colorAllFurniture: (color) => {
+    get().pushSnapshot();
+    set(state => ({
+      currentDesign: {
+        ...state.currentDesign,
+        furniture: state.currentDesign.furniture.map(f => ({ ...f, color })),
+      },
+    }));
+  },
+
+  // ─── Shade/Tint (FR-COLOR-04) ───
+  applyShade: (id, lightness) => {
+    get().pushSnapshot();
+    set(state => ({
+      currentDesign: {
+        ...state.currentDesign,
+        furniture: state.currentDesign.furniture.map(f => {
+          if (f.id !== id) return f;
+          // Adjust the existing color's HSL lightness
+          const hex = f.color.replace('#', '');
+          const r = parseInt(hex.substring(0, 2), 16) / 255;
+          const g = parseInt(hex.substring(2, 4), 16) / 255;
+          const b = parseInt(hex.substring(4, 6), 16) / 255;
+          const max = Math.max(r, g, b), min = Math.min(r, g, b);
+          let h = 0, s = 0;
+          const l = (max + min) / 2;
+          if (max !== min) {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+            else if (max === g) h = ((b - r) / d + 2) / 6;
+            else h = ((r - g) / d + 4) / 6;
+          }
+          // Apply new lightness
+          const newL = Math.max(0.1, Math.min(0.9, lightness));
+          const hue2rgb = (p: number, q: number, t: number) => {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1/6) return p + (q - p) * 6 * t;
+            if (t < 1/2) return q;
+            if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+            return p;
+          };
+          const q = newL < 0.5 ? newL * (1 + s) : newL + s - newL * s;
+          const p = 2 * newL - q;
+          const nr = Math.round(hue2rgb(p, q, h + 1/3) * 255);
+          const ng = Math.round(hue2rgb(p, q, h) * 255);
+          const nb = Math.round(hue2rgb(p, q, h - 1/3) * 255);
+          const newColor = '#' + [nr, ng, nb].map(v => v.toString(16).padStart(2, '0')).join('');
+          return { ...f, color: newColor };
+        }),
+      },
+    }));
+  },
+
+  // ─── Palette Presets (FR-COLOR-05) ───
+  applyPalette: (palette) => {
+    get().pushSnapshot();
+    set(state => ({
+      currentDesign: {
+        ...state.currentDesign,
+        room: {
+          ...state.currentDesign.room,
+          wallColor: palette.wallColor,
+          floorColor: palette.floorColor,
+        },
+        furniture: state.currentDesign.furniture.map((f, i) => ({
+          ...f,
+          color: palette.furnitureColors[i % palette.furnitureColors.length],
+        })),
+      },
+    }));
+  },
 }));

@@ -7,6 +7,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Boxes, Eye, EyeOff, Loader } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
+import authBg from '../assets/images/auth-bg.png';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -33,7 +34,9 @@ export default function LoginPage() {
 
   return (
     <div className="auth-page">
-      <div className="auth-bg-pattern" />
+      <div className="auth-bg-pattern">
+        <img src={authBg} alt="" className="auth-bg-image" />
+      </div>
       <motion.div
         className="glass-card auth-card"
         initial={{ opacity: 0, scale: 0.95 }}

@@ -7,12 +7,18 @@ import { useAuthStore } from '../store/useAuthStore';
 import { db } from '../db/db';
 import type { RoomShape, FloorType } from '../db/db';
 
-const shapes: { id: RoomShape; label: string }[] = [
-  { id: 'rectangular', label: 'Rectangular' },
-  { id: 'l-shaped', label: 'L-Shaped' },
-  { id: 'open-plan', label: 'Open Plan' },
-  { id: 'studio', label: 'Studio' },
-  { id: 'irregular', label: 'Irregular' },
+import shapeRectangular from '../assets/images/shapes/shape-rectangular.png';
+import shapeLShaped from '../assets/images/shapes/shape-l-shaped.png';
+import shapeOpenPlan from '../assets/images/shapes/shape-open-plan.png';
+import shapeStudio from '../assets/images/shapes/shape-studio.png';
+import shapeIrregular from '../assets/images/shapes/shape-irregular.png';
+
+const shapes: { id: RoomShape; label: string; img: string }[] = [
+  { id: 'rectangular', label: 'Rectangular', img: shapeRectangular },
+  { id: 'l-shaped', label: 'L-Shaped', img: shapeLShaped },
+  { id: 'open-plan', label: 'Open Plan', img: shapeOpenPlan },
+  { id: 'studio', label: 'Studio', img: shapeStudio },
+  { id: 'irregular', label: 'Irregular', img: shapeIrregular },
 ];
 
 const wallColors = ['#F5F0EB','#FFF8EB','#E8E4DE','#D4C5A9','#B8C5D6','#C5D6B8','#D6C5B8','#E8D6C5'];
@@ -77,7 +83,9 @@ export default function RoomWizard() {
               <div className="wizard-shapes">
                 {shapes.map(s=>(
                   <div key={s.id} className={`wizard-shape-card ${shape===s.id?'selected':''}`} onClick={()=>setShape(s.id)}>
-                    <div className="wizard-shape-preview"/><h4>{s.label}</h4>
+                    <div className="wizard-shape-preview">
+                      <img src={s.img} alt={s.label + ' room layout'} />
+                    </div><h4>{s.label}</h4>
                   </div>
                 ))}
               </div>

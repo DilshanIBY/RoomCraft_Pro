@@ -84,6 +84,40 @@
   margin: 0 auto;
 }
 
+.splash-hero--split {
+  flex-direction: row;
+  text-align: left;
+  align-items: center;
+  gap: var(--space-12);
+  max-width: 1200px;
+  padding: var(--space-12) var(--space-8);
+}
+
+.splash-hero-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.splash-hero-text .splash-cta-group {
+  justify-content: flex-start;
+}
+
+.splash-hero-image {
+  flex: 1;
+  max-width: 520px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(44, 24, 16, 0.15), var(--shadow-gold);
+  border: 1px solid var(--border-gold);
+}
+
+.splash-hero-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .splash-badge {
   margin-bottom: var(--space-6);
 }
@@ -189,8 +223,17 @@
 .auth-bg-pattern {
   position: absolute;
   inset: 0;
-  background: var(--gradient-hero);
-  opacity: 0.5;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.auth-bg-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(6px) brightness(0.85);
+  transform: scale(1.05);
+  opacity: 0.6;
 }
 
 .auth-card {
@@ -657,6 +700,44 @@
   box-shadow: var(--shadow-gold);
 }
 
+.design-card-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform var(--duration-normal) var(--ease-smooth);
+}
+.design-card:hover .design-card-thumb-img {
+  transform: scale(1.05);
+}
+
+/* ─── Customer Dashboard Hero ─── */
+.customer-hero-content {
+  flex: 1;
+}
+
+.customer-hero-image {
+  flex: 0 0 280px;
+  max-width: 280px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(44, 24, 16, 0.12);
+  border: 1px solid var(--border-gold);
+}
+.customer-hero-image img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+}
+
+/* Customer hero layout */
+.glass-card:has(.customer-hero-content) {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
 /* ═══════════════════════════════════════════════════════════
    Room Setup Wizard
    ═══════════════════════════════════════════════════════════ */
@@ -791,12 +872,18 @@
   background: var(--accent-gold-light);
 }
 .wizard-shape-preview {
-  width: 80px;
-  height: 60px;
+  width: 100%;
+  height: 100px;
   margin: 0 auto var(--space-3);
-  border: 2px solid var(--accent-gold);
-  border-radius: 4px;
-  opacity: 0.6;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  opacity: 0.75;
+  transition: opacity var(--duration-normal);
+}
+.wizard-shape-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .wizard-shape-card.selected .wizard-shape-preview { opacity: 1; }
 .wizard-shape-card h4 {
@@ -1132,6 +1219,12 @@
   color: var(--text-muted);
   font-size: var(--text-lg);
   flex-shrink: 0;
+  overflow: hidden;
+}
+.catalogue-item-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .catalogue-item-info {
   flex: 1;
