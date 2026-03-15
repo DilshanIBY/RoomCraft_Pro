@@ -1,10 +1,10 @@
 // ═══════════════════════════════════════════════════════════
-// FloorPlanCanvas — Konva.js 2D Room Editor
+// FloorPlanCanvas — Konva.js 2D Room Editor (Phase 3 Complete)
 // Renders the room, furniture, grid, measurements
-// Supports drag, rotate, select, zoom, pan
+// Supports drag, rotate, resize, select, zoom, pan, snap
 // ═══════════════════════════════════════════════════════════
 
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { Stage, Layer, Rect, Text, Group, Line, Transformer } from 'react-konva';
 import { useAppStore } from '../store/useAppStore';
 import type { FurnitureItem, PlacedFurniture } from '../db/db';
@@ -18,23 +18,27 @@ interface Props {
 
 const PIXELS_PER_METER = 80;
 const WALL_THICKNESS = 8;
-const GRID_SIZE = 0.5; // 0.5m grid
 
 export default function FloorPlanCanvas({ catalogueItems, containerWidth, containerHeight }: Props) {
   const store = useAppStore();
-  const { currentDesign, moveFurniture, rotateFurniture, selectItem, pushSnapshot } = store;
+  const { currentDesign, moveFurniture, rotateFurniture, scaleFurniture,
+    selectItem, pushSnapshot, gridSize, snapEnabled, showGrid, toggleGrid } = store;
   const { room, furniture, selectedItemId } = currentDesign;
 
   const stageRef = useRef<Konva.Stage>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
-  const [showGrid, setShowGrid] = useState(true);
   const [stageScale, setStageScale] = useState(1);
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
+  const [dragMeasure, setDragMeasure] = useState<{
+    id: string; left: number; right: number; top: number; bottom: number;
+  } | null>(null);
+  const [snapLines, setSnapLines] = useState<{ x: number[]; y: number[] }>({ x: [], y: [] });
 
   const roomW = room.width * PIXELS_PER_METER;
   const roomD = room.depth * PIXELS_PER_METER;
   const offsetX = (containerWidth - roomW) / 2;
   const offsetY = (containerHeight - roomD) / 2;
+  const gridPx = gridSize * PIXELS_PER_METER;
 
   // ─── Transformer for selected item ───
   useEffect(() => {
@@ -55,12 +59,16 @@ export default function FloorPlanCanvas({ catalogueItems, containerWidth, contai
   // ─── Keyboard shortcuts ───
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
+      // Don't capture keys if user is typing in an input
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
       if (e.key === 'Delete' || e.key === 'Backspace') {
         if (selectedItemId) store.removeFurniture(selectedItemId);
       }
       if (e.ctrlKey && e.key === 'z') { e.preventDefault(); store.undo(); }
       if (e.ctrlKey && e.key === 'y') { e.preventDefault(); store.redo(); }
-      if (e.key === 'g') setShowGrid(v => !v);
+      if (e.key === 'g') toggleGrid();
       if (e.key === 'Escape') selectItem(null);
       // Rotate selected 90°
       if (e.key === 'r' && selectedItemId) {
@@ -94,6 +102,47 @@ export default function FloorPlanCanvas({ catalogueItems, containerWidth, contai
     });
   }, []);
 
+  // ─── Fit to room ───
+  const fitToRoom = useCallback(() => {
+    const padding = 80;
+    const scaleX = (containerWidth - padding * 2) / roomW;
+    const scaleY = (containerHeight - padding * 2) / roomD;
+    const newScale = Math.min(scaleX, scaleY, 2);
+    setStageScale(newScale);
+    setStagePos({
+      x: (containerWidth - roomW * newScale) / 2,
+      y: (containerHeight - roomD * newScale) / 2,
+    });
+  }, [containerWidth, containerHeight, roomW, roomD]);
+
+  // Expose fitToRoom and zoom controls to parent via custom event
+  useEffect(() => {
+    const el = stageRef.current?.container();
+    if (!el) return;
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail === 'fit') fitToRoom();
+      if (detail === 'zoomIn') {
+        const newScale = Math.min(3, stageScale * 1.2);
+        setStageScale(newScale);
+        setStagePos({
+          x: containerWidth / 2 - (containerWidth / 2 - stagePos.x) * (newScale / stageScale),
+          y: containerHeight / 2 - (containerHeight / 2 - stagePos.y) * (newScale / stageScale),
+        });
+      }
+      if (detail === 'zoomOut') {
+        const newScale = Math.max(0.3, stageScale / 1.2);
+        setStageScale(newScale);
+        setStagePos({
+          x: containerWidth / 2 - (containerWidth / 2 - stagePos.x) * (newScale / stageScale),
+          y: containerHeight / 2 - (containerHeight / 2 - stagePos.y) * (newScale / stageScale),
+        });
+      }
+    };
+    el.addEventListener('canvas-command', handler);
+    return () => el.removeEventListener('canvas-command', handler);
+  }, [fitToRoom, stageScale, stagePos, containerWidth, containerHeight]);
+
   // ─── Click empty space to deselect ───
   const handleStageClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
     if (e.target === e.target.getStage() || e.target.name() === 'floor' || e.target.name() === 'wall') {
@@ -101,23 +150,57 @@ export default function FloorPlanCanvas({ catalogueItems, containerWidth, contai
     }
   };
 
+  // ─── Compute snap guide lines for alignment ───
+  const computeSnapGuides = useCallback((movingId: string, x: number, z: number) => {
+    if (!snapEnabled) { setSnapLines({ x: [], y: [] }); return; }
+    const threshold = 0.15; // meters
+    const guides: { x: number[]; y: number[] } = { x: [], y: [] };
+
+    // Snap to grid lines
+    const snappedX = Math.round(x / gridSize) * gridSize;
+    const snappedZ = Math.round(z / gridSize) * gridSize;
+    if (Math.abs(snappedX - x) < threshold) guides.x.push(snappedX);
+    if (Math.abs(snappedZ - z) < threshold) guides.y.push(snappedZ);
+
+    // Snap to other furniture centers
+    for (const f of furniture) {
+      if (f.id === movingId) continue;
+      if (Math.abs(f.x - x) < threshold) guides.x.push(f.x);
+      if (Math.abs(f.z - z) < threshold) guides.y.push(f.z);
+    }
+
+    setSnapLines(guides);
+  }, [snapEnabled, gridSize, furniture]);
+
+  // ─── Compute real-time measurements during drag ───
+  const computeMeasurement = useCallback((placed: PlacedFurniture, item: FurnitureItem) => {
+    const halfW = (item.dimensions.width * placed.scale) / 2;
+    const halfD = (item.dimensions.depth * placed.scale) / 2;
+    const left = placed.x - halfW;
+    const right = room.width - (placed.x + halfW);
+    const top = placed.z - halfD;
+    const bottom = room.depth - (placed.z + halfD);
+    setDragMeasure({ id: placed.id, left, right, top, bottom });
+  }, [room.width, room.depth]);
+
   // ─── Build grid lines ───
-  const gridLines: React.ReactElement[] = [];
-  if (showGrid) {
-    const gridPx = GRID_SIZE * PIXELS_PER_METER;
+  const gridLines = useMemo(() => {
+    if (!showGrid) return [];
+    const lines: React.ReactElement[] = [];
     for (let x = 0; x <= roomW; x += gridPx) {
-      gridLines.push(
+      lines.push(
         <Line key={`gv${x}`} points={[offsetX + x, offsetY, offsetX + x, offsetY + roomD]}
-          stroke="rgba(180,160,130,0.15)" strokeWidth={1} />
+          stroke="rgba(180,160,130,0.13)" strokeWidth={1} />
       );
     }
     for (let y = 0; y <= roomD; y += gridPx) {
-      gridLines.push(
+      lines.push(
         <Line key={`gh${y}`} points={[offsetX, offsetY + y, offsetX + roomW, offsetY + y]}
-          stroke="rgba(180,160,130,0.15)" strokeWidth={1} />
+          stroke="rgba(180,160,130,0.13)" strokeWidth={1} />
       );
     }
-  }
+    return lines;
+  }, [showGrid, roomW, roomD, gridPx, offsetX, offsetY]);
 
   // ─── Render furniture items ───
   const renderFurniture = (placed: PlacedFurniture) => {
@@ -140,15 +223,57 @@ export default function FloorPlanCanvas({ catalogueItems, containerWidth, contai
         onClick={(e) => { e.cancelBubble = true; selectItem(placed.id); }}
         onTap={(e) => { e.cancelBubble = true; selectItem(placed.id); }}
         onDragStart={() => { pushSnapshot(); }}
+        onDragMove={(e) => {
+          // Clamp within room boundaries
+          const halfW = w / 2;
+          const halfD = d / 2;
+          let nx = e.target.x();
+          let nz = e.target.y();
+
+          // Boundary clamping
+          nx = Math.max(offsetX + halfW + WALL_THICKNESS, Math.min(offsetX + roomW - halfW - WALL_THICKNESS, nx));
+          nz = Math.max(offsetY + halfD + WALL_THICKNESS, Math.min(offsetY + roomD - halfD - WALL_THICKNESS, nz));
+
+          // Snap to grid
+          if (snapEnabled) {
+            const worldX = (nx - offsetX) / PIXELS_PER_METER;
+            const worldZ = (nz - offsetY) / PIXELS_PER_METER;
+            const snappedX = Math.round(worldX / gridSize) * gridSize;
+            const snappedZ = Math.round(worldZ / gridSize) * gridSize;
+            nx = offsetX + snappedX * PIXELS_PER_METER;
+            nz = offsetY + snappedZ * PIXELS_PER_METER;
+          }
+
+          e.target.x(nx);
+          e.target.y(nz);
+
+          // Compute live measurements
+          const worldX = (nx - offsetX) / PIXELS_PER_METER;
+          const worldZ = (nz - offsetY) / PIXELS_PER_METER;
+          computeSnapGuides(placed.id, worldX, worldZ);
+          computeMeasurement({ ...placed, x: worldX, z: worldZ }, item);
+        }}
         onDragEnd={(e) => {
           const newX = (e.target.x() - offsetX) / PIXELS_PER_METER;
           const newZ = (e.target.y() - offsetY) / PIXELS_PER_METER;
           moveFurniture(placed.id, newX, newZ);
+          setDragMeasure(null);
+          setSnapLines({ x: [], y: [] });
         }}
         onTransformEnd={(e) => {
           const node = e.target;
           const rotation = Math.round(node.rotation());
+          const scaleX = node.scaleX();
+          
+          // Update rotation
           rotateFurniture(placed.id, rotation >= 0 ? rotation % 360 : (rotation % 360) + 360);
+          
+          // Update scale
+          if (Math.abs(scaleX - 1) > 0.01) {
+            const newScale = Math.max(0.3, Math.min(3, placed.scale * scaleX));
+            scaleFurniture(placed.id, Math.round(newScale * 100) / 100);
+          }
+          
           node.scaleX(1); node.scaleY(1);
         }}
       >
@@ -156,7 +281,7 @@ export default function FloorPlanCanvas({ catalogueItems, containerWidth, contai
         <Rect
           offsetX={w / 2} offsetY={d / 2}
           width={w} height={d}
-          fill="rgba(0,0,0,0.08)"
+          fill="rgba(0,0,0,0.06)"
           cornerRadius={4}
           x={3} y={3}
         />
@@ -165,12 +290,19 @@ export default function FloorPlanCanvas({ catalogueItems, containerWidth, contai
           offsetX={w / 2} offsetY={d / 2}
           width={w} height={d}
           fill={placed.color}
-          stroke={isSelected ? '#C6930A' : 'rgba(0,0,0,0.2)'}
+          stroke={isSelected ? '#C6930A' : 'rgba(0,0,0,0.18)'}
           strokeWidth={isSelected ? 2.5 : 1}
           cornerRadius={4}
-          shadowColor="rgba(0,0,0,0.15)"
-          shadowBlur={isSelected ? 12 : 4}
+          shadowColor="rgba(0,0,0,0.12)"
+          shadowBlur={isSelected ? 14 : 4}
           shadowOffsetY={2}
+        />
+        {/* Direction indicator (small triangle showing front) */}
+        <Line
+          points={[-4, -d / 2 + 2, 0, -d / 2 - 4, 4, -d / 2 + 2]}
+          fill={isSelected ? '#C6930A' : 'rgba(0,0,0,0.25)'}
+          closed
+          listening={false}
         />
         {/* Label */}
         <Text
@@ -192,13 +324,106 @@ export default function FloorPlanCanvas({ catalogueItems, containerWidth, contai
             offsetX={w / 2}
             y={d / 2 + 6}
             width={w}
-            text={`${item.dimensions.width}m × ${item.dimensions.depth}m`}
+            text={`${(item.dimensions.width * placed.scale).toFixed(2)}m × ${(item.dimensions.depth * placed.scale).toFixed(2)}m`}
             fontSize={9}
             fontFamily="JetBrains Mono, monospace"
             fill="#C6930A"
             align="center"
             listening={false}
           />
+        )}
+      </Group>
+    );
+  };
+
+  // ─── Render snap guide lines ───
+  const renderSnapGuides = () => {
+    const lines: React.ReactElement[] = [];
+    snapLines.x.forEach((x, i) => {
+      const px = offsetX + x * PIXELS_PER_METER;
+      lines.push(
+        <Line key={`sx${i}`} points={[px, offsetY - 20, px, offsetY + roomD + 20]}
+          stroke="rgba(196,154,60,0.5)" strokeWidth={1} dash={[6, 4]} />
+      );
+    });
+    snapLines.y.forEach((y, i) => {
+      const py = offsetY + y * PIXELS_PER_METER;
+      lines.push(
+        <Line key={`sy${i}`} points={[offsetX - 20, py, offsetX + roomW + 20, py]}
+          stroke="rgba(196,154,60,0.5)" strokeWidth={1} dash={[6, 4]} />
+      );
+    });
+    return lines;
+  };
+
+  // ─── Render real-time measurements ───
+  const renderDragMeasurements = () => {
+    if (!dragMeasure) return null;
+    const placed = furniture.find(f => f.id === dragMeasure.id);
+    const item = placed ? catalogueItems.find(i => i.id === placed.modelId) : null;
+    if (!placed || !item) return null;
+
+    const px = offsetX + placed.x * PIXELS_PER_METER;
+    const pz = offsetY + placed.z * PIXELS_PER_METER;
+    const halfW = (item.dimensions.width * placed.scale * PIXELS_PER_METER) / 2;
+    const halfD = (item.dimensions.depth * placed.scale * PIXELS_PER_METER) / 2;
+    const measureColor = '#C49A3C';
+    const fontSize = 9;
+    const font = 'JetBrains Mono, monospace';
+
+    return (
+      <Group listening={false}>
+        {/* Left measurement */}
+        {dragMeasure.left > 0.05 && (
+          <>
+            <Line points={[offsetX + WALL_THICKNESS, pz, px - halfW, pz]}
+              stroke={measureColor} strokeWidth={1} dash={[3, 3]} />
+            <Rect x={offsetX + WALL_THICKNESS + (px - halfW - offsetX - WALL_THICKNESS) / 2 - 18} y={pz - 9}
+              width={36} height={16} fill="rgba(0,0,0,0.7)" cornerRadius={3} />
+            <Text
+              x={offsetX + WALL_THICKNESS + (px - halfW - offsetX - WALL_THICKNESS) / 2 - 18} y={pz - 7}
+              width={36} text={`${dragMeasure.left.toFixed(2)}`}
+              fontSize={fontSize} fontFamily={font} fill="#FFF" align="center" />
+          </>
+        )}
+        {/* Right measurement */}
+        {dragMeasure.right > 0.05 && (
+          <>
+            <Line points={[px + halfW, pz, offsetX + roomW - WALL_THICKNESS, pz]}
+              stroke={measureColor} strokeWidth={1} dash={[3, 3]} />
+            <Rect x={px + halfW + (offsetX + roomW - WALL_THICKNESS - px - halfW) / 2 - 18} y={pz - 9}
+              width={36} height={16} fill="rgba(0,0,0,0.7)" cornerRadius={3} />
+            <Text
+              x={px + halfW + (offsetX + roomW - WALL_THICKNESS - px - halfW) / 2 - 18} y={pz - 7}
+              width={36} text={`${dragMeasure.right.toFixed(2)}`}
+              fontSize={fontSize} fontFamily={font} fill="#FFF" align="center" />
+          </>
+        )}
+        {/* Top measurement */}
+        {dragMeasure.top > 0.05 && (
+          <>
+            <Line points={[px, offsetY + WALL_THICKNESS, px, pz - halfD]}
+              stroke={measureColor} strokeWidth={1} dash={[3, 3]} />
+            <Rect x={px + 4} y={offsetY + WALL_THICKNESS + (pz - halfD - offsetY - WALL_THICKNESS) / 2 - 8}
+              width={36} height={16} fill="rgba(0,0,0,0.7)" cornerRadius={3} />
+            <Text
+              x={px + 4} y={offsetY + WALL_THICKNESS + (pz - halfD - offsetY - WALL_THICKNESS) / 2 - 6}
+              width={36} text={`${dragMeasure.top.toFixed(2)}`}
+              fontSize={fontSize} fontFamily={font} fill="#FFF" align="center" />
+          </>
+        )}
+        {/* Bottom measurement */}
+        {dragMeasure.bottom > 0.05 && (
+          <>
+            <Line points={[px, pz + halfD, px, offsetY + roomD - WALL_THICKNESS]}
+              stroke={measureColor} strokeWidth={1} dash={[3, 3]} />
+            <Rect x={px + 4} y={pz + halfD + (offsetY + roomD - WALL_THICKNESS - pz - halfD) / 2 - 8}
+              width={36} height={16} fill="rgba(0,0,0,0.7)" cornerRadius={3} />
+            <Text
+              x={px + 4} y={pz + halfD + (offsetY + roomD - WALL_THICKNESS - pz - halfD) / 2 - 6}
+              width={36} text={`${dragMeasure.bottom.toFixed(2)}`}
+              fontSize={fontSize} fontFamily={font} fill="#FFF" align="center" />
+          </>
         )}
       </Group>
     );
@@ -279,35 +504,45 @@ export default function FloorPlanCanvas({ catalogueItems, containerWidth, contai
           <Text x={PIXELS_PER_METER / 2 - 10} y={4} text="1 m" fontSize={10} fontFamily="JetBrains Mono" fill={dimColor} />
         </Group>
 
+        {/* Snap guide lines */}
+        {renderSnapGuides()}
+
+        {/* Real-time measurements */}
+        {renderDragMeasurements()}
+
         {/* Furniture */}
         {furniture.map(renderFurniture)}
 
-        {/* Transformer (rotation / selection handles) */}
+        {/* Transformer (rotation + scale handles) */}
         <Transformer
           ref={transformerRef}
           rotateEnabled={true}
-          resizeEnabled={false}
+          resizeEnabled={true}
+          keepRatio={true}
           borderStroke="#C6930A"
           borderStrokeWidth={2}
           anchorFill="#C6930A"
           anchorStroke="#FFF8EB"
           anchorSize={8}
           anchorCornerRadius={2}
-          rotateAnchorOffset={20}
-          enabledAnchors={[]}
+          rotateAnchorOffset={22}
+          enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right']}
+          rotationSnaps={[0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180, 195, 210, 225, 240, 255, 270, 285, 300, 315, 330, 345]}
           boundBoxFunc={(oldBox, newBox) => {
-            if (newBox.width < 20 || newBox.height < 20) return oldBox;
+            const minSize = 16;
+            if (Math.abs(newBox.width) < minSize || Math.abs(newBox.height) < minSize) return oldBox;
             return newBox;
           }}
         />
       </Layer>
 
-      {/* HUD Layer — zoom/grid info */}
+      {/* HUD Layer — zoom/grid/snap info */}
       <Layer listening={false}>
         <Group x={10} y={containerHeight / stageScale - 40}>
-          <Rect width={140} height={24} fill="rgba(0,0,0,0.5)" cornerRadius={4} />
-          <Text x={8} y={5} text={`Zoom: ${(stageScale * 100).toFixed(0)}% | Grid: ${showGrid ? 'ON' : 'OFF'}`}
-            fontSize={10} fontFamily="JetBrains Mono" fill="#CCC" />
+          <Rect width={220} height={24} fill="rgba(0,0,0,0.55)" cornerRadius={4} />
+          <Text x={8} y={5}
+            text={`Zoom: ${(stageScale * 100).toFixed(0)}% | Grid: ${showGrid ? 'ON' : 'OFF'} (${gridSize}m) | Snap: ${snapEnabled ? 'ON' : 'OFF'}`}
+            fontSize={9} fontFamily="JetBrains Mono" fill="#DDD" />
         </Group>
       </Layer>
     </Stage>
@@ -315,7 +550,9 @@ export default function FloorPlanCanvas({ catalogueItems, containerWidth, contai
 }
 
 function isLightColor(hex: string): boolean {
-  const rgb = parseInt(hex.replace('#', ''), 16);
+  const clean = hex.replace('#', '');
+  if (clean.length < 6) return true;
+  const rgb = parseInt(clean, 16);
   const r = (rgb >> 16) & 0xff, g = (rgb >> 8) & 0xff, b = rgb & 0xff;
   return (r * 299 + g * 587 + b * 114) / 1000 > 150;
 }

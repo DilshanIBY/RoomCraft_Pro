@@ -38,6 +38,9 @@ interface AppState {
   theme: 'light' | 'dark';
   leftSidebarOpen: boolean;
   rightSidebarOpen: boolean;
+  gridSize: number;
+  snapEnabled: boolean;
+  showGrid: boolean;
 
   // ─── History ───
   undoStack: DesignSnapshot[];
@@ -65,6 +68,9 @@ interface AppState {
   setTheme: (theme: 'light' | 'dark') => void;
   toggleLeftSidebar: () => void;
   toggleRightSidebar: () => void;
+  setGridSize: (size: number) => void;
+  toggleSnap: () => void;
+  toggleGrid: () => void;
 
   // ─── History Actions ───
   undo: () => void;
@@ -95,6 +101,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   theme: (localStorage.getItem('rc_theme') as 'light' | 'dark') || 'light',
   leftSidebarOpen: true,
   rightSidebarOpen: true,
+  gridSize: 0.5,
+  snapEnabled: false,
+  showGrid: true,
   undoStack: [],
   redoStack: [],
 
@@ -218,6 +227,9 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   toggleLeftSidebar: () => set(s => ({ leftSidebarOpen: !s.leftSidebarOpen })),
   toggleRightSidebar: () => set(s => ({ rightSidebarOpen: !s.rightSidebarOpen })),
+  setGridSize: (size) => set({ gridSize: size }),
+  toggleSnap: () => set(s => ({ snapEnabled: !s.snapEnabled })),
+  toggleGrid: () => set(s => ({ showGrid: !s.showGrid })),
 
   // ─── History ───
   pushSnapshot: () => set(state => ({
