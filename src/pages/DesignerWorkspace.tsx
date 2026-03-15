@@ -5,13 +5,15 @@ import {
   Boxes, Box, Search, Trash2, RotateCw, Move, Palette,
   ChevronLeft, ChevronRight, Sun, Moon, Magnet,
   ZoomIn, ZoomOut, Maximize2,
-  ChevronDown, GripVertical, Clock,
+  ChevronDown, GripVertical, Clock, Send,
 } from 'lucide-react';
 import { useAppStore, PALETTE_PRESETS } from '../store/useAppStore';
 import { db } from '../db/db';
 import type { FurnitureItem, FurnitureCategory } from '../db/db';
 import FloorPlanCanvas from '../components/FloorPlanCanvas';
 import RoomScene3D from '../components/RoomScene3D';
+
+import emptyCatalogue from '../assets/images/empty-catalogue.png';
 
 const categories: { id: FurnitureCategory | 'all'; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -214,6 +216,7 @@ export default function DesignerWorkspace() {
           <div className="toolbar-divider"/>
           <button className="btn btn-icon btn-ghost" onClick={toggleTheme} title="Toggle theme">{theme==='light'?<Moon size={16}/>:<Sun size={16}/>}</button>
           <button className="btn btn-gold btn-sm" onClick={handleSave}><Save size={14}/> Save</button>
+          <button className="btn btn-emerald btn-sm" onClick={() => nav('/enquiry')}><Send size={14}/> Request Quote</button>
         </div>
       </div>
 
@@ -272,6 +275,12 @@ export default function DesignerWorkspace() {
                     </div>
                   </div>
                 ))}
+                {filtered.length === 0 && (
+                  <div className="catalogue-empty">
+                    <img src={emptyCatalogue} alt="No items found" className="catalogue-empty-img" />
+                    <p>We couldn't find any items matching your search.</p>
+                  </div>
+                )}
               </div>
             </>
           ) : (

@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import {
   Boxes, LayoutDashboard, Compass, FolderOpen, Settings,
   LogOut, Users, BarChart3, Sun, Moon, Plus, Search,
-  Armchair, Clock, Sparkles, ArrowRight, Trash2,
+  Armchair, Clock, Sparkles, ArrowRight, Trash2, Heart,
 } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useAppStore } from '../store/useAppStore';
@@ -65,6 +65,12 @@ export default function DashboardLayout() {
               </NavLink>
               <NavLink to="/designs" className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}>
                 <FolderOpen size={18} /> My Designs
+              </NavLink>
+              <NavLink to="/wishlist" className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}>
+                <Heart size={18} /> Wishlist
+              </NavLink>
+              <NavLink to="/inspiration" className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}>
+                <Sparkles size={18} /> Inspiration
               </NavLink>
             </>
           )}

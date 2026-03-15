@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { Boxes, Palette, Eye, ArrowRight, Sun, Moon } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import heroRoom from '../assets/images/hero-room.png';
+import featuresBg from '../assets/images/features-bg.png';
 
 export default function SplashPage() {
   const navigate = useNavigate();
@@ -79,9 +80,13 @@ export default function SplashPage() {
 
       {/* Features */}
       <section className="splash-features">
-        <motion.div
-          className="glass-card splash-feature-card"
-          initial={{ opacity: 0, y: 20 }}
+        <div className="splash-features-bg">
+          <img src={featuresBg} alt="" />
+        </div>
+        <div className="splash-features-content">
+          <motion.div
+            className="glass-card splash-feature-card"
+            initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
@@ -117,6 +122,7 @@ export default function SplashPage() {
           <h3>Spatial Intelligence</h3>
           <p>Real-time measurements, collision detection, and snap-to-grid precision for accurate room layouts.</p>
         </motion.div>
+        </div>
       </section>
 
       {/* Footer */}

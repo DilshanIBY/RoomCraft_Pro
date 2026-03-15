@@ -5,11 +5,10 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Plus, Search, Clock, Trash2, Copy, Pencil, Check, X,
   Tag, FolderOpen, ArrowRight, SlidersHorizontal, ChevronDown,
-  Compass,
 } from 'lucide-react';
 import { db } from '../db/db';
 import type { Design } from '../db/db';

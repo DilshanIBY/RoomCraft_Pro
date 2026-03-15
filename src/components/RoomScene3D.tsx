@@ -16,7 +16,7 @@ import {
 } from '@react-three/drei';
 import * as THREE from 'three';
 import { useAppStore } from '../store/useAppStore';
-import type { FurnitureItem, PlacedFurniture } from '../db/db';
+import type { FurnitureItem, PlacedFurniture, WallOpening } from '../db/db';
 
 // ─── Color Utility ───
 function hexToThreeColor(hex: string): THREE.Color {
@@ -142,6 +142,84 @@ function Room() {
         <boxGeometry args={[0.02, 0.06, depth]} />
         <meshStandardMaterial color={lightenColor(wallColor, -0.15)} roughness={0.6} />
       </mesh>
+
+      {/* Doors & Windows (FR-ROOM-05) */}
+      {(room.openings || []).map((op: WallOpening) => {
+        const isDoor = op.type === 'door';
+        const opH = op.height;
+        const opW = op.width;
+        const baseY = isDoor ? opH / 2 : height * 0.55;
+
+        // Compute 3D position along the wall
+        let pos: [number, number, number] = [0, 0, 0];
+        let rot: [number, number, number] = [0, 0, 0];
+        if (op.wall === 'north') {
+          pos = [op.position, baseY, 0.01];
+          rot = [0, 0, 0];
+        } else if (op.wall === 'south') {
+          pos = [op.position, baseY, depth - 0.01];
+          rot = [0, Math.PI, 0];
+        } else if (op.wall === 'west') {
+          pos = [0.01, baseY, op.position];
+          rot = [0, Math.PI / 2, 0];
+        } else {
+          pos = [width - 0.01, baseY, op.position];
+          rot = [0, -Math.PI / 2, 0];
+        }
+
+        return (
+          <group key={op.id} position={pos} rotation={rot}>
+            {isDoor ? (
+              <>
+                {/* Door panel */}
+                <mesh castShadow>
+                  <boxGeometry args={[opW, opH, 0.04]} />
+                  <meshStandardMaterial
+                    color="#8B6914"
+                    roughness={0.5}
+                    metalness={0.1}
+                  />
+                </mesh>
+                {/* Door handle */}
+                <mesh position={[opW * 0.35, 0, 0.03]}>
+                  <sphereGeometry args={[0.025, 8, 8]} />
+                  <meshStandardMaterial color="#C49A3C" metalness={0.6} roughness={0.3} />
+                </mesh>
+                {/* Frame */}
+                <mesh>
+                  <boxGeometry args={[opW + 0.06, opH + 0.03, 0.05]} />
+                  <meshStandardMaterial color="#6B4E1B" roughness={0.6} />
+                </mesh>
+              </>
+            ) : (
+              <>
+                {/* Window glass */}
+                <mesh>
+                  <boxGeometry args={[opW, opH, 0.02]} />
+                  <meshStandardMaterial
+                    color="#87CEEB"
+                    transparent
+                    opacity={0.3}
+                    roughness={0.05}
+                    metalness={0.1}
+                    side={THREE.DoubleSide}
+                  />
+                </mesh>
+                {/* Window frame */}
+                <mesh>
+                  <boxGeometry args={[opW + 0.04, opH + 0.04, 0.03]} />
+                  <meshStandardMaterial color="#E8E0D4" roughness={0.5} />
+                </mesh>
+                {/* Center mullion */}
+                <mesh>
+                  <boxGeometry args={[0.02, opH, 0.025]} />
+                  <meshStandardMaterial color="#E8E0D4" roughness={0.5} />
+                </mesh>
+              </>
+            )}
+          </group>
+        );
+      })}
     </group>
   );
 }

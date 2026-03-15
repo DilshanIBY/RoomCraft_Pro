@@ -20,6 +20,17 @@ export type RoomShape = 'rectangular' | 'l-shaped' | 'open-plan' | 'studio' | 'i
 export type FloorType = 'hardwood' | 'tile' | 'carpet' | 'marble';
 export type FurnitureCategory = 'chair' | 'dining_table' | 'side_table' | 'sofa' | 'lamp' | 'shelf' | 'decor';
 export type FurnitureStyle = 'modern' | 'classic' | 'scandinavian' | 'industrial';
+export type WallSide = 'north' | 'south' | 'east' | 'west';
+export type OpeningType = 'door' | 'window';
+
+export interface WallOpening {
+  id: string;
+  wall: WallSide;
+  type: OpeningType;
+  position: number;   // offset along the wall in meters (from left/top edge)
+  width: number;      // opening width in meters
+  height: number;     // opening height in meters
+}
 
 export interface PlacedFurniture {
   id: string;
@@ -45,6 +56,7 @@ export interface Design {
     wallColor: string;
     floorType: FloorType;
     floorColor: string;
+    openings?: WallOpening[];
   };
   furniture: PlacedFurniture[];
   thumbnailDataUrl?: string;
@@ -96,8 +108,27 @@ export interface RoomTemplate {
     wallColor: string;
     floorType: FloorType;
     floorColor: string;
+    openings?: WallOpening[];
   };
   tags: string[];
+}
+
+export interface UserRoomTemplate {
+  id: string;
+  userId: string;
+  name: string;
+  description: string;
+  roomConfig: {
+    shape: RoomShape;
+    width: number;
+    depth: number;
+    height: number;
+    wallColor: string;
+    floorType: FloorType;
+    floorColor: string;
+    openings?: WallOpening[];
+  };
+  createdAt: Date;
 }
 
 class RoomCraftDB extends Dexie {
@@ -107,6 +138,7 @@ class RoomCraftDB extends Dexie {
   wishlists!: Table<WishlistItem>;
   enquiries!: Table<Enquiry>;
   roomTemplates!: Table<RoomTemplate>;
+  userRoomTemplates!: Table<UserRoomTemplate>;
 
   constructor() {
     super('RoomCraftPro');
@@ -117,6 +149,7 @@ class RoomCraftDB extends Dexie {
       wishlists: 'id, userId, itemId, [userId+itemId]',
       enquiries: 'id, userId, designId, status',
       roomTemplates: 'id, name',
+      userRoomTemplates: 'id, userId, name',
     });
   }
 }

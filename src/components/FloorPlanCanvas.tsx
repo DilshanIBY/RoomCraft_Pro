@@ -5,9 +5,9 @@
 // ═══════════════════════════════════════════════════════════
 
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
-import { Stage, Layer, Rect, Text, Group, Line, Transformer } from 'react-konva';
+import { Stage, Layer, Rect, Text, Group, Line, Transformer, Arc } from 'react-konva';
 import { useAppStore } from '../store/useAppStore';
-import type { FurnitureItem, PlacedFurniture } from '../db/db';
+import type { FurnitureItem, PlacedFurniture, WallOpening } from '../db/db';
 import Konva from 'konva';
 
 interface Props {
@@ -473,6 +473,102 @@ export default function FloorPlanCanvas({ catalogueItems, containerWidth, contai
         <Rect name="wall" x={offsetX} y={offsetY} width={WALL_THICKNESS} height={roomD} fill={room.wallColor} stroke="#888" strokeWidth={0.5} />
         <Rect name="wall" x={offsetX} y={offsetY + roomD - WALL_THICKNESS} width={roomW} height={WALL_THICKNESS} fill={room.wallColor} stroke="#888" strokeWidth={0.5} />
         <Rect name="wall" x={offsetX + roomW - WALL_THICKNESS} y={offsetY} width={WALL_THICKNESS} height={roomD} fill={room.wallColor} stroke="#888" strokeWidth={0.5} />
+
+        {/* Doors & Windows (FR-ROOM-05) */}
+        {(room.openings || []).map((op: WallOpening) => {
+          const opW = op.width * PIXELS_PER_METER;
+          const opPos = op.position * PIXELS_PER_METER;
+          const isDoor = op.type === 'door';
+
+          // Compute position on wall
+          let x = 0, y = 0, w = 0, h = 0;
+          if (op.wall === 'north') {
+            x = offsetX + opPos - opW / 2;
+            y = offsetY;
+            w = opW; h = WALL_THICKNESS;
+          } else if (op.wall === 'south') {
+            x = offsetX + opPos - opW / 2;
+            y = offsetY + roomD - WALL_THICKNESS;
+            w = opW; h = WALL_THICKNESS;
+          } else if (op.wall === 'west') {
+            x = offsetX;
+            y = offsetY + opPos - opW / 2;
+            w = WALL_THICKNESS; h = opW;
+          } else {
+            x = offsetX + roomW - WALL_THICKNESS;
+            y = offsetY + opPos - opW / 2;
+            w = WALL_THICKNESS; h = opW;
+          }
+
+          return (
+            <Group key={op.id}>
+              {/* Clear wall segment */}
+              <Rect x={x} y={y} width={w} height={h} fill={room.floorColor} />
+              {isDoor ? (
+                <>
+                  {/* Door frame lines */}
+                  {op.wall === 'north' || op.wall === 'south' ? (
+                    <>
+                      <Line points={[x, y, x, y + h]} stroke="#8B6914" strokeWidth={2} />
+                      <Line points={[x + w, y, x + w, y + h]} stroke="#8B6914" strokeWidth={2} />
+                      {/* Swing arc */}
+                      <Arc
+                        x={x}
+                        y={op.wall === 'north' ? y + h : y}
+                        innerRadius={0} outerRadius={opW * 0.9}
+                        angle={90}
+                        rotation={op.wall === 'north' ? 0 : -90}
+                        stroke="#C49A3C" strokeWidth={1}
+                        dash={[4, 4]}
+                        listening={false}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <Line points={[x, y, x + w, y]} stroke="#8B6914" strokeWidth={2} />
+                      <Line points={[x, y + h, x + w, y + h]} stroke="#8B6914" strokeWidth={2} />
+                      <Arc
+                        x={op.wall === 'west' ? x + w : x}
+                        y={y}
+                        innerRadius={0} outerRadius={opW * 0.9}
+                        angle={90}
+                        rotation={op.wall === 'west' ? 0 : 90}
+                        stroke="#C49A3C" strokeWidth={1}
+                        dash={[4, 4]}
+                        listening={false}
+                      />
+                    </>
+                  )}
+                </>
+              ) : (
+                <>
+                  {/* Window — light blue fill with frame */}
+                  <Rect
+                    x={x} y={y} width={w} height={h}
+                    fill="rgba(135,206,235,0.35)"
+                    stroke="#5B9BD5" strokeWidth={1.5}
+                  />
+                  {/* Center line to indicate glass */}
+                  {op.wall === 'north' || op.wall === 'south' ? (
+                    <Line points={[x + w / 2, y, x + w / 2, y + h]} stroke="#5B9BD5" strokeWidth={1} />
+                  ) : (
+                    <Line points={[x, y + h / 2, x + w, y + h / 2]} stroke="#5B9BD5" strokeWidth={1} />
+                  )}
+                </>
+              )}
+              {/* Label */}
+              <Text
+                x={op.wall === 'west' || op.wall === 'east' ? x - 24 : x}
+                y={op.wall === 'north' ? y - 14 : op.wall === 'south' ? y + h + 3 : y + h + 3}
+                width={op.wall === 'north' || op.wall === 'south' ? w : 60}
+                text={isDoor ? '🚪' : '🪟'}
+                fontSize={10}
+                align="center"
+                listening={false}
+              />
+            </Group>
+          );
+        })}
 
         {/* Dimension labels */}
         <Text

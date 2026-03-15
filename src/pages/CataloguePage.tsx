@@ -6,14 +6,14 @@
 import { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, SlidersHorizontal, X, Grid3X3, List, ChevronDown,
+  Search, SlidersHorizontal, X, Grid3X3, ChevronDown,
   Armchair, Lamp, BookOpen, Flower2, UtensilsCrossed, Sofa, Coffee,
-  Heart, ShoppingBag, ArrowRight, Star,
+  Heart, ShoppingBag,
 } from 'lucide-react';
 import { db } from '../db/db';
 import type { FurnitureItem, FurnitureCategory, FurnitureStyle } from '../db/db';
 import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '../store/useAppStore';
+import { useAuthStore } from '../store/useAuthStore';
 
 // ─── Category Config ───
 const CATEGORIES: { id: FurnitureCategory | 'all'; label: string; icon: React.ReactNode }[] = [
@@ -59,6 +59,7 @@ const categoryEmoji: Record<string, string> = {
 
 export default function CataloguePage() {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [items, setItems] = useState<FurnitureItem[]>([]);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<FurnitureCategory | 'all'>('all');
@@ -68,10 +69,43 @@ export default function CataloguePage() {
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [selectedItem, setSelectedItem] = useState<FurnitureItem | null>(null);
   const [activeColor, setActiveColor] = useState<string | null>(null);
+  const [wishlistedIds, setWishlistedIds] = useState<Set<string>>(new Set());
+  const [wishlistToast, setWishlistToast] = useState<string | null>(null);
 
   useEffect(() => {
     db.furnitureItems.toArray().then(setItems);
   }, []);
+
+  // Load user's wishlisted items
+  useEffect(() => {
+    if (!user) return;
+    db.wishlists.where('userId').equals(user.id).toArray().then(items => {
+      setWishlistedIds(new Set(items.map(w => w.itemId)));
+    });
+  }, [user]);
+
+  const toggleWishlist = async (itemId: string) => {
+    if (!user) return;
+    const isWishlisted = wishlistedIds.has(itemId);
+    if (isWishlisted) {
+      // Remove
+      const existing = await db.wishlists.where({ userId: user.id, itemId }).first();
+      if (existing) await db.wishlists.delete(existing.id);
+      setWishlistedIds(prev => { const n = new Set(prev); n.delete(itemId); return n; });
+      setWishlistToast('Removed from wishlist');
+    } else {
+      // Add
+      await db.wishlists.add({
+        id: crypto.randomUUID(),
+        userId: user.id,
+        itemId,
+        createdAt: new Date(),
+      });
+      setWishlistedIds(prev => new Set(prev).add(itemId));
+      setWishlistToast('Added to wishlist ❤️');
+    }
+    setTimeout(() => setWishlistToast(null), 2000);
+  };
 
   const toggleStyle = (s: FurnitureStyle) => {
     setSelectedStyles(prev => {
@@ -387,13 +421,33 @@ export default function CataloguePage() {
                     >
                       <ShoppingBag size={16} /> Add to Design
                     </button>
-                    <button className="btn btn-glass">
-                      <Heart size={16} /> Wishlist
+                    <button
+                      className={`btn ${wishlistedIds.has(selectedItem.id) ? 'btn-gold' : 'btn-glass'}`}
+                      onClick={() => toggleWishlist(selectedItem.id)}
+                    >
+                      <Heart size={16} fill={wishlistedIds.has(selectedItem.id) ? 'currentColor' : 'none'} />
+                      {wishlistedIds.has(selectedItem.id) ? 'Wishlisted' : 'Wishlist'}
                     </button>
                   </div>
                 </div>
               </div>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Wishlist Toast */}
+      <AnimatePresence>
+        {wishlistToast && (
+          <motion.div
+            className="wishlist-toast glass-card"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 30 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          >
+            <Heart size={16} style={{ color: 'var(--accent-gold)' }} />
+            {wishlistToast}
           </motion.div>
         )}
       </AnimatePresence>

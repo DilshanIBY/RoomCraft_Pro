@@ -17,6 +17,9 @@ import SettingsPage from './pages/SettingsPage';
 import CataloguePage from './pages/CataloguePage';
 import MyDesignsPage from './pages/MyDesignsPage';
 import StyleQuizPage from './pages/StyleQuizPage';
+import WishlistPage from './pages/WishlistPage';
+import EnquiryPage from './pages/EnquiryPage';
+import InspirationPage from './pages/InspirationPage';
 
 // ─── Protected Route ───
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) {
@@ -74,10 +77,13 @@ function AppContent() {
       <Route path="/room-wizard" element={<ProtectedRoute><RoomWizard /></ProtectedRoute>} />
       <Route path="/designer" element={<ProtectedRoute><DesignerWorkspace /></ProtectedRoute>} />
       <Route path="/style-quiz" element={<ProtectedRoute><StyleQuizPage /></ProtectedRoute>} />
+      <Route path="/enquiry" element={<ProtectedRoute><EnquiryPage /></ProtectedRoute>} />
       <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
         <Route path="/dashboard" element={<DashboardRouter />} />
         <Route path="/catalogue" element={<CataloguePage />} />
         <Route path="/designs" element={<MyDesignsPage />} />
+        <Route path="/wishlist" element={<WishlistPage />} />
+        <Route path="/inspiration" element={<InspirationPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/admin/*" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
       </Route>

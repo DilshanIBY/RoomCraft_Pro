@@ -4,7 +4,7 @@
 // ═══════════════════════════════════════════════════════════
 
 import { create } from 'zustand';
-import type { RoomShape, FloorType, PlacedFurniture, FurnitureItem } from '../db/db';
+import type { RoomShape, FloorType, PlacedFurniture, FurnitureItem, WallOpening, WallSide, OpeningType } from '../db/db';
 
 // ─── Color Palette Presets (FR-COLOR-05) ───
 export interface PalettePreset {
@@ -61,6 +61,7 @@ interface RoomConfig {
   wallColor: string;
   floorType: FloorType;
   floorColor: string;
+  openings: WallOpening[];
 }
 
 interface CurrentDesign {
@@ -128,6 +129,11 @@ interface AppState {
   colorAllFurniture: (color: string) => void;
   applyShade: (id: string, lightness: number) => void;
   applyPalette: (palette: PalettePreset) => void;
+
+  // ─── Door/Window Actions (FR-ROOM-05) ───
+  addOpening: (wall: WallSide, type: OpeningType) => void;
+  removeOpening: (id: string) => void;
+  updateOpening: (id: string, updates: Partial<WallOpening>) => void;
 }
 
 const defaultRoom: RoomConfig = {
@@ -138,6 +144,7 @@ const defaultRoom: RoomConfig = {
   wallColor: '#F5F0EB',
   floorType: 'hardwood',
   floorColor: '#A0522D',
+  openings: [],
 };
 
 const defaultDesign: CurrentDesign = {
@@ -403,6 +410,57 @@ export const useAppStore = create<AppState>((set, get) => ({
           ...f,
           color: palette.furnitureColors[i % palette.furnitureColors.length],
         })),
+      },
+    }));
+  },
+
+  // ─── Door/Window Actions (FR-ROOM-05) ───
+  addOpening: (wall, type) => {
+    get().pushSnapshot();
+    const room = get().currentDesign.room;
+    const wallLength = (wall === 'north' || wall === 'south') ? room.width : room.depth;
+    const opening: WallOpening = {
+      id: crypto.randomUUID(),
+      wall,
+      type,
+      position: wallLength / 2,
+      width: type === 'door' ? 0.9 : 1.2,
+      height: type === 'door' ? 2.1 : 1.0,
+    };
+    set(state => ({
+      currentDesign: {
+        ...state.currentDesign,
+        room: {
+          ...state.currentDesign.room,
+          openings: [...state.currentDesign.room.openings, opening],
+        },
+      },
+    }));
+  },
+
+  removeOpening: (id) => {
+    get().pushSnapshot();
+    set(state => ({
+      currentDesign: {
+        ...state.currentDesign,
+        room: {
+          ...state.currentDesign.room,
+          openings: state.currentDesign.room.openings.filter(o => o.id !== id),
+        },
+      },
+    }));
+  },
+
+  updateOpening: (id, updates) => {
+    set(state => ({
+      currentDesign: {
+        ...state.currentDesign,
+        room: {
+          ...state.currentDesign.room,
+          openings: state.currentDesign.room.openings.map(o =>
+            o.id === id ? { ...o, ...updates } : o
+          ),
+        },
       },
     }));
   },
