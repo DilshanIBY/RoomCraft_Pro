@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useAppStore } from '../store/useAppStore';
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { db } from '../db/db';
 import type { Design, FurnitureItem } from '../db/db';
 import dashboardHero from '../assets/images/dashboard-hero.png';
@@ -210,7 +210,7 @@ export function DesignerDashboard() {
               useAppStore.getState().loadDesign({
                 id: d.id,
                 name: d.name,
-                room: d.roomConfig,
+                room: { ...d.roomConfig, openings: d.roomConfig.openings || [] },
                 furniture: d.furniture,
                 selectedItemId: null,
               });
@@ -338,7 +338,7 @@ export function CustomerDashboard() {
               useAppStore.getState().loadDesign({
                 id: d.id,
                 name: d.name,
-                room: d.roomConfig,
+                room: { ...d.roomConfig, openings: d.roomConfig.openings || [] },
                 furniture: d.furniture,
                 selectedItemId: null,
               });
@@ -402,12 +402,34 @@ export function AdminDashboard() {
   const [profiles, setProfiles] = useState<{ id: string; fullName: string; email: string; role: string; isActive: boolean; createdAt: Date }[]>([]);
   const [designCount, setDesignCount] = useState(0);
   const [furnitureCount, setFurnitureCount] = useState(0);
+  const [allDesigns, setAllDesigns] = useState<{ id: string; name: string; userId: string; userName: string; roomShape: string; furnitureCount: number; createdAt: Date }[]>([]);
 
   useEffect(() => {
     db.profiles.toArray().then(setProfiles);
     db.designs.count().then(setDesignCount);
     db.furnitureItems.count().then(setFurnitureCount);
+    // Load all designs with user info (FR-ADM-03)
+    (async () => {
+      const designs = await db.designs.toArray();
+      const users = await db.profiles.toArray();
+      const userMap = new Map(users.map(u => [u.id, u.fullName]));
+      setAllDesigns(designs.map(d => ({
+        id: d.id,
+        name: d.name,
+        userId: d.userId,
+        userName: userMap.get(d.userId) || 'Unknown',
+        roomShape: d.roomConfig.shape,
+        furnitureCount: d.furniture.length,
+        createdAt: d.createdAt,
+      })));
+    })();
   }, []);
+
+  const deleteDesign = async (id: string) => {
+    await db.designs.delete(id);
+    setAllDesigns(prev => prev.filter(d => d.id !== id));
+    setDesignCount(prev => prev - 1);
+  };
 
   const toggleUserActive = async (id: string, isActive: boolean) => {
     await db.profiles.update(id, { isActive: !isActive, updatedAt: new Date() });
@@ -497,6 +519,48 @@ export function AdminDashboard() {
                 </td>
               </tr>
             ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* All Designs Management (FR-ADM-03) */}
+      <div className="glass-card" style={{ padding: 'var(--space-5)', borderRadius: 'var(--radius-lg)', marginTop: 'var(--space-6)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
+          <h3 style={{ fontSize: 'var(--text-md)' }}>All Designs</h3>
+          <span className="badge badge-gold">{allDesigns.length} designs</span>
+        </div>
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>Design Name</th>
+              <th>Creator</th>
+              <th>Room Type</th>
+              <th>Furniture</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {allDesigns.map(d => (
+              <tr key={d.id}>
+                <td style={{ fontWeight: 500 }}>{d.name}</td>
+                <td style={{ color: 'var(--text-secondary)' }}>{d.userName}</td>
+                <td><span className="badge badge-gold">{d.roomShape}</span></td>
+                <td style={{ color: 'var(--text-muted)' }}>{d.furnitureCount} items</td>
+                <td style={{ color: 'var(--text-muted)' }}>{new Date(d.createdAt).toLocaleDateString()}</td>
+                <td>
+                  <button
+                    className="btn btn-sm btn-danger"
+                    onClick={() => deleteDesign(d.id)}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {allDesigns.length === 0 && (
+              <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 'var(--space-6)' }}>No designs yet</td></tr>
+            )}
           </tbody>
         </table>
       </div>

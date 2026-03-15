@@ -749,6 +749,7 @@ export default function RoomScene3D({ catalogueItems }: RoomScene3DProps) {
           antialias: true,
           toneMapping: THREE.ACESFilmicToneMapping,
           toneMappingExposure: 1.1,
+          preserveDrawingBuffer: true,
         }}
         style={{
           background: theme === 'dark'

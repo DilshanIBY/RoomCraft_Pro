@@ -6,12 +6,14 @@ import {
   ChevronLeft, ChevronRight, Sun, Moon, Magnet,
   ZoomIn, ZoomOut, Maximize2,
   ChevronDown, GripVertical, Clock, Send,
+  DoorOpen, Camera, Share2,
 } from 'lucide-react';
 import { useAppStore, PALETTE_PRESETS } from '../store/useAppStore';
 import { db } from '../db/db';
-import type { FurnitureItem, FurnitureCategory } from '../db/db';
+import type { FurnitureItem, FurnitureCategory, WallSide } from '../db/db';
 import FloorPlanCanvas from '../components/FloorPlanCanvas';
 import RoomScene3D from '../components/RoomScene3D';
+import { useAuthStore } from '../store/useAuthStore';
 
 import emptyCatalogue from '../assets/images/empty-catalogue.png';
 
@@ -42,9 +44,11 @@ export default function DesignerWorkspace() {
     gridSize, setGridSize, snapEnabled, toggleSnap, showGrid, toggleGrid,
     moveFurniture, rotateFurniture, scaleFurniture, colorFurniture,
     colorAllFurniture, applyShade, applyPalette,
+    addOpening, removeOpening, updateOpening,
   } = store;
 
   const [shadeValue, setShadeValue] = useState(0.5);
+  const [showOpeningMenu, setShowOpeningMenu] = useState(false);
 
   const [items, setItems] = useState<FurnitureItem[]>([]);
   const [search, setSearch] = useState('');
@@ -114,6 +118,64 @@ export default function DesignerWorkspace() {
       furniture: currentDesign.furniture,
       roomConfig: currentDesign.room,
       updatedAt: new Date(),
+    });
+    setSaveToast(true);
+    setTimeout(() => setSaveToast(false), 2000);
+  };
+
+  // ─── Screenshot (FR-3D-10) ───
+  const handleScreenshot = () => {
+    // Find the canvas element inside the 3D scene
+    const canvasEl = canvasContainerRef.current?.querySelector('canvas');
+    if (!canvasEl) {
+      // If we're in 2D mode, switch to 3D first
+      if (viewMode === '2d') {
+        setViewMode('3d');
+        setTimeout(handleScreenshot, 500);
+        return;
+      }
+      return;
+    }
+    try {
+      const dataUrl = canvasEl.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = `${currentDesign.name || 'design'}-screenshot.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (e) {
+      console.warn('Screenshot failed:', e);
+    }
+  };
+
+  // ─── Share (FR-CUST-06) ───
+  const handleShare = async () => {
+    const designData = JSON.stringify({
+      name: currentDesign.name,
+      room: currentDesign.room,
+      furniture: currentDesign.furniture,
+    });
+    const blob = new Blob([designData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = `${currentDesign.name || 'design'}.roomcraft.json`;
+    link.href = url;
+    link.click();
+    URL.revokeObjectURL(url);
+    setSaveToast(true);
+    setTimeout(() => setSaveToast(false), 2000);
+  };
+
+  // ─── Save as Template (FR-ROOM-06) ───
+  const handleSaveAsTemplate = async () => {
+    const name = prompt('Template name:', `${currentDesign.name || 'My Room'} Template`);
+    if (!name) return;
+    await db.userRoomTemplates.add({
+      id: crypto.randomUUID(),
+      userId: useAuthStore.getState().user?.id || '',
+      name,
+      description: `Saved from "${currentDesign.name}" — ${currentDesign.room.shape} room`,
+      roomConfig: { ...currentDesign.room },
+      createdAt: new Date(),
     });
     setSaveToast(true);
     setTimeout(() => setSaveToast(false), 2000);
@@ -215,8 +277,11 @@ export default function DesignerWorkspace() {
           <button className="btn btn-icon btn-ghost" onClick={redo} disabled={redoStack.length===0} title="Redo (Ctrl+Y)"><Redo2 size={16}/></button>
           <div className="toolbar-divider"/>
           <button className="btn btn-icon btn-ghost" onClick={toggleTheme} title="Toggle theme">{theme==='light'?<Moon size={16}/>:<Sun size={16}/>}</button>
-          <button className="btn btn-gold btn-sm" onClick={handleSave}><Save size={14}/> Save</button>
-          <button className="btn btn-emerald btn-sm" onClick={() => nav('/enquiry')}><Send size={14}/> Request Quote</button>
+          <button className="btn btn-gold btn-sm" onClick={handleSave} aria-label="Save design"><Save size={14}/> Save</button>
+          <button className="btn btn-glass btn-sm" onClick={handleSaveAsTemplate} aria-label="Save room as template">📐 Template</button>
+          <button className="btn btn-icon btn-ghost" onClick={handleScreenshot} title="Screenshot (3D)" aria-label="Take 3D screenshot"><Camera size={16}/></button>
+          <button className="btn btn-icon btn-ghost" onClick={handleShare} title="Export Design" aria-label="Export design as JSON"><Share2 size={16}/></button>
+          <button className="btn btn-emerald btn-sm" onClick={() => nav('/enquiry')} aria-label="Request a quote"><Send size={14}/> Request Quote</button>
         </div>
       </div>
 
@@ -356,6 +421,43 @@ export default function DesignerWorkspace() {
               <button className="canvas-tool-btn" onClick={() => sendCanvasCommand('zoomOut')} title="Zoom Out"><ZoomOut size={14}/></button>
               <button className="canvas-tool-btn" onClick={() => sendCanvasCommand('zoomIn')} title="Zoom In"><ZoomIn size={14}/></button>
               <button className="canvas-tool-btn" onClick={() => sendCanvasCommand('fit')} title="Fit to Room"><Maximize2 size={14}/></button>
+
+              <div className="canvas-tool-divider"/>
+
+              {/* Door/Window placement */}
+              <div className="grid-size-dropdown" style={{position:'relative'}}>
+                <button
+                  className="canvas-tool-btn"
+                  onClick={() => setShowOpeningMenu(!showOpeningMenu)}
+                  title="Add Door / Window"
+                >
+                  <DoorOpen size={14}/> <ChevronDown size={10}/>
+                </button>
+                {showOpeningMenu && (
+                  <div className="grid-size-menu" style={{width:160}}>
+                    <div style={{padding:'4px 8px',fontSize:'var(--text-xs)',color:'var(--text-muted)',fontWeight:600}}>Add Door</div>
+                    {(['north','south','east','west'] as WallSide[]).map(wall => (
+                      <button
+                        key={`door-${wall}`}
+                        className="grid-size-option"
+                        onClick={() => { addOpening(wall, 'door'); setShowOpeningMenu(false); }}
+                      >
+                        🚪 {wall.charAt(0).toUpperCase() + wall.slice(1)} Wall
+                      </button>
+                    ))}
+                    <div style={{padding:'4px 8px',fontSize:'var(--text-xs)',color:'var(--text-muted)',fontWeight:600,borderTop:'1px solid var(--border-glass)',marginTop:4,paddingTop:8}}>Add Window</div>
+                    {(['north','south','east','west'] as WallSide[]).map(wall => (
+                      <button
+                        key={`win-${wall}`}
+                        className="grid-size-option"
+                        onClick={() => { addOpening(wall, 'window'); setShowOpeningMenu(false); }}
+                      >
+                        🪟 {wall.charAt(0).toUpperCase() + wall.slice(1)} Wall
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -520,6 +622,44 @@ export default function DesignerWorkspace() {
                       ))}
                     </div>
                   </div>
+
+                  {/* Doors & Windows list */}
+                  {currentDesign.room.openings.length > 0 && (
+                    <div className="properties-section">
+                      <h4><DoorOpen size={12} style={{marginRight:4}}/> Doors & Windows</h4>
+                      <div style={{display:'flex',flexDirection:'column',gap:'var(--space-2)'}}>
+                        {currentDesign.room.openings.map(op => (
+                          <div key={op.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'4px 0',borderBottom:'1px solid var(--border-glass)'}}>
+                            <span style={{fontSize:'var(--text-xs)'}}>
+                              {op.type === 'door' ? '🚪' : '🪟'} {op.wall} wall
+                              <span style={{color:'var(--text-muted)',marginLeft:4}}>{op.width}m</span>
+                            </span>
+                            <div style={{display:'flex',gap:4,alignItems:'center'}}>
+                              <input
+                                className="glass-input"
+                                type="number"
+                                step="0.1"
+                                min="0.3"
+                                max={op.wall === 'north' || op.wall === 'south' ? currentDesign.room.width : currentDesign.room.depth}
+                                value={op.position}
+                                onChange={(e) => updateOpening(op.id, { position: parseFloat(e.target.value) || op.position })}
+                                style={{width:48,fontSize:'var(--text-xs)',padding:'2px 4px'}}
+                                title="Position along wall"
+                              />
+                              <button
+                                className="btn btn-icon btn-ghost btn-sm"
+                                onClick={() => removeOpening(op.id)}
+                                title="Remove"
+                                style={{width:20,height:20}}
+                              >
+                                <Trash2 size={10}/>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </>

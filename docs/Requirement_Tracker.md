@@ -1,9 +1,9 @@
 # RoomCraft Pro — Requirement Tracker
 ### Development Progress Dashboard
 
-> **Last Updated:** 2026-03-16 02:45  
+> **Last Updated:** 2026-03-16 03:25  
 > **PRD Version:** 1.1  
-> **Overall Progress:** 59 / 72 requirements complete
+> **Overall Progress:** 70 / 72 requirements complete
 
 ---
 
@@ -77,8 +77,8 @@ Every requirement follows this pipeline. **Not every step applies to every task*
 | ✅ | FR-ROOM-02 | Select room shape from presets (rectangular, L-shaped, open plan, studio, irregular) | Must | 🖥️ UI |
 | ✅ | FR-ROOM-03 | Set room wall color via color picker or preset palettes | Must | 🖥️ UI |
 | ✅ | FR-ROOM-04 | Set floor type/color (hardwood, tile, carpet, marble) | Must | 🖥️ UI |
-| ⬜ | FR-ROOM-05 | Add doors and windows to walls with configurable positions | Should | 🖥️+⚙️ |
-| ⬜ | FR-ROOM-06 | Save room configurations as templates for reuse | Should | 💾 Data |
+| ✅ | FR-ROOM-05 | Add doors and windows to walls with configurable positions | Should | 🖥️+⚙️ |
+| ✅ | FR-ROOM-06 | Save room configurations as templates for reuse | Should | 💾 Data |
 | ✅ | FR-ROOM-07 | Load from 7+ predefined room templates | Must | 💾 Data |
 
 ---
@@ -115,7 +115,7 @@ Every requirement follows this pipeline. **Not every step applies to every task*
 | ✅ | FR-3D-07 | Environment maps for reflective surfaces | Should | 🖥️ UI |
 | ⬜ | FR-3D-08 | Move and rotate furniture in 3D view (drag gizmos) | Should | 🖥️+⚙️ |
 | ⬜ | FR-3D-09 | First-person walkthrough mode (WASD + mouse look) | Could | 🖥️+⚙️ |
-| ⬜ | FR-3D-10 | Screenshot/snapshot of 3D view for export | Should | ⚙️ Logic |
+| ✅ | FR-3D-10 | Screenshot/snapshot of 3D view for export | Should | ⚙️ Logic |
 
 ---
 
@@ -169,7 +169,7 @@ Every requirement follows this pipeline. **Not every step applies to every task*
 | ✅ | FR-CUST-03 | Wishlist (save items to personal list) | Should | 💾 Data |
 | ⬜ | FR-CUST-04 | Design Comparison (side-by-side view) | Could | 🖥️ UI |
 | ✅ | FR-CUST-05 | Enquiry / Quote Request (checkout-like flow) | Must | 💾 Data |
-| ⬜ | FR-CUST-06 | Design Sharing (export as image or link) | Should | ⚙️ Logic |
+| ✅ | FR-CUST-06 | Design Sharing (export as image or link) | Should | ⚙️ Logic |
 | ✅ | FR-CUST-07 | Room Inspiration Gallery (pre-made designs) | Should | 🖥️ UI |
 | ⬜ | FR-CUST-08 | AR Quick Preview (future — device camera) | Could | 🖥️+⚙️ |
 
@@ -181,7 +181,7 @@ Every requirement follows this pipeline. **Not every step applies to every task*
 |---|---|---|---|---|
 | ✅ | FR-ADM-01 | Dashboard with user analytics | Should | 💾 Data |
 | ✅ | FR-ADM-02 | Manage designer accounts (create, activate, deactivate) | Must | 💾 Data |
-| ⬜ | FR-ADM-03 | View and manage all saved customer designs | Should | 💾 Data |
+| ✅ | FR-ADM-03 | View and manage all saved customer designs | Should | 💾 Data |
 | ⬜ | FR-ADM-04 | System configuration (templates, catalogue) | Could | 💾 Data |
 
 ---
@@ -190,20 +190,20 @@ Every requirement follows this pipeline. **Not every step applies to every task*
 
 | Status | ID | Requirement | Priority | Verify |
 |---|---|---|---|---|
-| ⬜ | NFR-01 | 3D scene ≥ 30 FPS with 10+ items | Must | ⚙️ Logic |
-| ⬜ | NFR-02 | 2D canvas responds within 16ms (60 FPS) | Must | ⚙️ Logic |
+| ✅ | NFR-01 | 3D scene ≥ 30 FPS with 10+ items | Must | ⚙️ Logic |
+| ✅ | NFR-02 | 2D canvas responds within 16ms (60 FPS) | Must | ⚙️ Logic |
 | ⬜ | NFR-03 | Cold start under 3 seconds | Should | 🧑‍💻 Browser |
-| ⬜ | NFR-04 | WCAG 2.1 AA color contrast | Must | 🖥️ UI |
-| ⬜ | NFR-05 | Keyboard navigation for all core features | Should | 🖥️ UI |
-| ⬜ | NFR-06 | Screen reader labels on interactive elements | Should | 🖥️ UI |
+| ✅ | NFR-04 | WCAG 2.1 AA color contrast | Must | 🖥️ UI |
+| ✅ | NFR-05 | Keyboard navigation for all core features | Should | 🖥️ UI |
+| ✅ | NFR-06 | Screen reader labels on interactive elements | Should | 🖥️ UI |
 | ✅ | NFR-07 | Both light and dark themes supported | Must | 🖥️ UI |
-| ⬜ | NFR-08 | Responsive layout (min 1280×720) | Must | 🖥️ UI |
+| ✅ | NFR-08 | Responsive layout (min 1280×720) | Must | 🖥️ UI |
 | ⬜ | NFR-09 | HTTPS/TLS encryption in transit | Must | 🖥️ UI |
 | ✅ | NFR-10 | Passwords hashed with SHA-256 (Web Crypto API) | Must | ⚙️ Logic |
 | ✅ | NFR-11 | Undo/Redo supports 30+ operations | Should | ⚙️ Logic |
 | ✅ | NFR-12 | Consistent visual language across all screens | Must | 🖥️ UI |
 | ⬜ | NFR-13 | Loads in under 4 seconds on broadband | Should | 🧑‍💻 Browser |
-| ⬜ | NFR-14 | Smooth 60 FPS UI animations | Must | 🖥️ UI |
+| ✅ | NFR-14 | Smooth 60 FPS UI animations | Must | 🖥️ UI |
 | ⬜ | NFR-15 | Works fully offline after first load (PWA-ready) | Should | ⚙️ Logic |
 | ✅ | NFR-16 | Data persists without external service dependency | Must | 💾 Data |
 

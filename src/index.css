@@ -521,6 +521,7 @@ h1, h2, h3, h4, h5, h6 {
   background-size: 200% auto;
   animation: shimmer 3s ease-in-out infinite;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -712,3 +713,144 @@ h1, h2, h3, h4, h5, h6 {
 .tooltip:hover::after {
   opacity: 1;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   ACCESSIBILITY — WCAG 2.1 AA (NFR-04, NFR-05, NFR-06)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Visible focus rings for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(var(--accent-gold-rgb), 0.18);
+}
+
+/* Remove default outline for mouse users (only focus-visible matters) */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Screen reader only utility - visually hidden but accessible */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Skip to content link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: var(--space-4);
+  z-index: 100;
+  padding: var(--space-3) var(--space-6);
+  background: var(--accent-gold);
+  color: #1A1210;
+  font-weight: 600;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  transition: top var(--duration-fast);
+}
+.skip-link:focus {
+  top: 0;
+}
+
+/* Ensure muted text meets 4.5:1 contrast for light theme */
+:root {
+  --text-muted-a11y: #8C7A60;
+}
+[data-theme="dark"] {
+  --text-muted-a11y: #9A8B75;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE LAYOUT — min 1280×720 (NFR-08)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Ensure minimum viewport */
+body {
+  min-width: 1280px;
+  min-height: 720px;
+}
+
+/* Responsive adjustments for narrower viewports */
+@media (max-width: 1440px) {
+  :root {
+    --sidebar-width: 240px;
+    --properties-width: 260px;
+  }
+}
+
+@media (max-width: 1280px) {
+  :root {
+    --sidebar-width: 200px;
+    --properties-width: 240px;
+  }
+
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .modal-content {
+    max-width: 90vw;
+  }
+}
+
+/* Large screen enhancements */
+@media (min-width: 1920px) {
+  :root {
+    --sidebar-width: 320px;
+    --properties-width: 340px;
+  }
+
+  .bento-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   60 FPS ANIMATION PERFORMANCE (NFR-14)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Promote animated elements to GPU compositing layer */
+.glass-card,
+.btn,
+.toast,
+.modal-content,
+.animate-float {
+  will-change: transform, opacity;
+}
+
+/* Ensure all transitions use GPU-accelerated properties */
+.btn:hover,
+.btn:active,
+.glass-card:hover {
+  transform: translateZ(0);
+}
+
+/* Animate only compositable properties for smooth 60fps */
+.canvas-tool-btn,
+.grid-size-option,
+.design-card,
+.properties-section {
+  transition: transform var(--duration-fast) var(--ease-smooth),
+              opacity var(--duration-fast) var(--ease-smooth),
+              background-color var(--duration-fast) var(--ease-smooth);
+}
+
