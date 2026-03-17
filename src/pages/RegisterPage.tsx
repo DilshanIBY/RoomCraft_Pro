@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Boxes, Check, ArrowRight, ArrowLeft, Palette, Home, Sparkles, Layers, Users } from 'lucide-react';
+import { Check, ArrowRight, ArrowLeft, Palette, Home, Sparkles, Layers, Users } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import authRegisterBg from '../assets/images/auth-register-bg.png';
 

@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Boxes, Mail, ArrowLeft, CheckCircle, Shield, KeyRound } from 'lucide-react';
+import { Mail, ArrowLeft, CheckCircle, Shield, KeyRound } from 'lucide-react';
 import authForgotBg from '../assets/images/auth-forgot-bg.png';
 
 export default function ForgotPasswordPage() {
