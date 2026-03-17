@@ -83,14 +83,6 @@ export default function ForgotPasswordPage() {
         <div className="auth-form-wrapper">
           {/* Logo */}
           <div className="auth-header">
-            <div className="splash-logo" style={{ justifyContent: 'center', marginBottom: 'var(--space-4)' }}>
-              <div className="splash-logo-icon">
-                <Boxes size={20} color="#1A1210" />
-              </div>
-              <div className="splash-logo-text">
-                Room<span>Craft</span> Pro
-              </div>
-            </div>
             <h2>{sent ? 'Check Your Email' : 'Forgot Password'}</h2>
             <p>{sent ? 'We\'ve sent password reset instructions to your email.' : 'Enter your email to receive a password reset link.'}</p>
           </div>

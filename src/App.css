@@ -641,7 +641,8 @@
 
 .auth-split {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   background: var(--bg-deep);
 }
 
@@ -2087,7 +2088,23 @@
   bottom: 0;
   z-index: var(--z-sidebar);
   transition: width 0.3s var(--ease-smooth), padding 0.3s var(--ease-smooth);
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+.admin-sidebar:hover {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-gold) transparent;
+}
+.admin-sidebar::-webkit-scrollbar {
+  width: 0;
+}
+.admin-sidebar:hover::-webkit-scrollbar {
+  width: 4px;
+}
+.admin-sidebar::-webkit-scrollbar-thumb {
+  background: var(--border-gold);
+  border-radius: 4px;
 }
 .admin-sidebar.collapsed {
   width: 64px;

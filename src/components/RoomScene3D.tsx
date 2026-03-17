@@ -583,16 +583,17 @@ function FurniturePiece({
       )}
       {/* Label */}
       {isSelected && (
-        <Text
-          position={[0, (h * scale) / 2 + 0.15, 0]}
-          fontSize={0.1}
-          color="#C49A3C"
-          anchorX="center"
-          anchorY="bottom"
-          font="https://fonts.gstatic.com/s/dmsans/v15/rP2tp2ywxg089UriCZa4.woff2"
-        >
-          {item.name}
-        </Text>
+        <Suspense fallback={null}>
+          <Text
+            position={[0, (h * scale) / 2 + 0.15, 0]}
+            fontSize={0.1}
+            color="#C49A3C"
+            anchorX="center"
+            anchorY="bottom"
+          >
+            {item.name}
+          </Text>
+        </Suspense>
       )}
     </group>
   );

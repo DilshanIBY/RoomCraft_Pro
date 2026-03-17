@@ -264,16 +264,16 @@ export default function FloorPlanCanvas({ catalogueItems, containerWidth, contai
           const node = e.target;
           const rotation = Math.round(node.rotation());
           const scaleX = node.scaleX();
-          
+
           // Update rotation
           rotateFurniture(placed.id, rotation >= 0 ? rotation % 360 : (rotation % 360) + 360);
-          
+
           // Update scale
           if (Math.abs(scaleX - 1) > 0.01) {
             const newScale = Math.max(0.3, Math.min(3, placed.scale * scaleX));
             scaleFurniture(placed.id, Math.round(newScale * 100) / 100);
           }
-          
+
           node.scaleX(1); node.scaleY(1);
         }}
       >
@@ -633,7 +633,7 @@ export default function FloorPlanCanvas({ catalogueItems, containerWidth, contai
       </Layer>
 
       {/* HUD Layer — zoom/grid/snap info (positioned in screen-space) */}
-      <Layer listening={false}>
+      {/* <Layer listening={false}>
         <Group
           x={(10 - stagePos.x) / stageScale}
           y={(containerHeight - 60 - stagePos.y) / stageScale}
@@ -643,7 +643,7 @@ export default function FloorPlanCanvas({ catalogueItems, containerWidth, contai
             text={`Zoom: ${(stageScale * 100).toFixed(0)}% | Grid: ${showGrid ? 'ON' : 'OFF'} (${gridSize}m) | Snap: ${snapEnabled ? 'ON' : 'OFF'}`}
             fontSize={9} fontFamily="JetBrains Mono" fill="#DDD" />
         </Group>
-      </Layer>
+      </Layer> */}
     </Stage>
   );
 }

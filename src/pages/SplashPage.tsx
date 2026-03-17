@@ -142,10 +142,9 @@ export default function SplashPage() {
   const heroContentOpacity = useTransform(scrollYProgress, [0, 0.12], [1, 0]);
   const heroContentX = useTransform(scrollYProgress, [0, 0.12], [0, -120]);
 
-  // ─── Right-side content: fade in from right late, fade out when hero ends ───
-  // Screen time ~24% (twice the left block's ~12%)
-  const heroRightOpacity = useTransform(scrollYProgress, [0.76, 0.84, 0.92, 1.0], [0, 1, 1, 0]);
-  const heroRightX = useTransform(scrollYProgress, [0.76, 0.84, 0.92, 1.0], [120, 0, 0, 120]);
+  // ─── Right-side content: fades in from right and stays visible ───
+  const heroRightOpacity = useTransform(scrollYProgress, [0.76, 0.88], [0, 1]);
+  const heroRightX = useTransform(scrollYProgress, [0.76, 0.88], [120, 0]);
 
   return (
     <div className="splash-page">
