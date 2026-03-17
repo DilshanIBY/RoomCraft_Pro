@@ -632,9 +632,12 @@ export default function FloorPlanCanvas({ catalogueItems, containerWidth, contai
         />
       </Layer>
 
-      {/* HUD Layer — zoom/grid/snap info */}
+      {/* HUD Layer — zoom/grid/snap info (positioned in screen-space) */}
       <Layer listening={false}>
-        <Group x={10} y={containerHeight / stageScale - 40}>
+        <Group
+          x={(10 - stagePos.x) / stageScale}
+          y={(containerHeight - 60 - stagePos.y) / stageScale}
+        >
           <Rect width={220} height={24} fill="rgba(0,0,0,0.55)" cornerRadius={4} />
           <Text x={8} y={5}
             text={`Zoom: ${(stageScale * 100).toFixed(0)}% | Grid: ${showGrid ? 'ON' : 'OFF'} (${gridSize}m) | Snap: ${snapEnabled ? 'ON' : 'OFF'}`}

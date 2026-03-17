@@ -5,12 +5,18 @@
 
 import { motion } from 'framer-motion';
 import {
-  Sparkles, ArrowRight, Sofa, Armchair, BookOpen,
-  Crown, Leaf, Compass,
+  Sparkles, ArrowRight,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store/useAppStore';
 import type { RoomShape, FloorType } from '../db/db';
+
+import inspModernLiving from '../assets/images/inspiration/insp-modern-living.png';
+import inspScandiBedroom from '../assets/images/inspiration/insp-scandi-bedroom.png';
+import inspIndustrialLoft from '../assets/images/inspiration/insp-industrial-loft.png';
+import inspClassicDining from '../assets/images/inspiration/insp-classic-dining.png';
+import inspReadingNook from '../assets/images/inspiration/insp-reading-nook.png';
+import inspStudioApartment from '../assets/images/inspiration/insp-studio-apartment.png';
 
 // ─── Pre-made Inspiration Designs ───
 interface InspirationDesign {
@@ -18,8 +24,8 @@ interface InspirationDesign {
   name: string;
   description: string;
   style: string;
+  image: string;
   gradient: string;
-  icon: React.ReactNode;
   room: {
     shape: RoomShape;
     width: number;
@@ -39,8 +45,8 @@ const INSPIRATIONS: InspirationDesign[] = [
     name: 'Modern Living Room',
     description: 'A sleek, minimalist living space with clean lines, neutral tones, and warm wood accents.',
     style: 'Modern',
+    image: inspModernLiving,
     gradient: 'linear-gradient(135deg, #2C1810 0%, #4A3630 40%, #C49A3C 100%)',
-    icon: <Sofa size={32} />,
     room: { shape: 'rectangular', width: 6, depth: 5, height: 2.8, wallColor: '#F5F0EB', floorType: 'hardwood', floorColor: '#A0522D' },
     furnitureCount: 6,
     tags: ['minimalist', 'warm', 'spacious'],
@@ -50,8 +56,8 @@ const INSPIRATIONS: InspirationDesign[] = [
     name: 'Scandinavian Bedroom',
     description: 'Bright, airy bedroom with light woods, soft whites, and cozy textiles for ultimate comfort.',
     style: 'Scandinavian',
+    image: inspScandiBedroom,
     gradient: 'linear-gradient(135deg, #87CEEB 0%, #F5F0EB 40%, #D4B896 100%)',
-    icon: <Leaf size={32} />,
     room: { shape: 'rectangular', width: 4.5, depth: 4, height: 2.6, wallColor: '#FFFDF9', floorType: 'hardwood', floorColor: '#D4B896' },
     furnitureCount: 5,
     tags: ['cozy', 'bright', 'natural'],
@@ -61,8 +67,8 @@ const INSPIRATIONS: InspirationDesign[] = [
     name: 'Industrial Loft',
     description: 'Raw, exposed aesthetics meet polished furniture — concrete, metal, and aged leather.',
     style: 'Industrial',
+    image: inspIndustrialLoft,
     gradient: 'linear-gradient(135deg, #4A4A4A 0%, #8B8682 40%, #D97706 100%)',
-    icon: <Compass size={32} />,
     room: { shape: 'open-plan', width: 8, depth: 6, height: 3.2, wallColor: '#E8E0D4', floorType: 'tile', floorColor: '#8B8682' },
     furnitureCount: 8,
     tags: ['urban', 'raw', 'statement'],
@@ -72,8 +78,8 @@ const INSPIRATIONS: InspirationDesign[] = [
     name: 'Classic Dining Room',
     description: 'Elegant dining setting with rich wood tones, plush seating, and warm golden lighting.',
     style: 'Classic',
+    image: inspClassicDining,
     gradient: 'linear-gradient(135deg, #8B6914 0%, #C49A3C 40%, #F5E6C4 100%)',
-    icon: <Crown size={32} />,
     room: { shape: 'rectangular', width: 5, depth: 4, height: 2.8, wallColor: '#FFF3E8', floorType: 'hardwood', floorColor: '#8B6914' },
     furnitureCount: 7,
     tags: ['elegant', 'formal', 'warm'],
@@ -83,8 +89,8 @@ const INSPIRATIONS: InspirationDesign[] = [
     name: 'Cozy Reading Nook',
     description: 'An intimate corner with a plush armchair, floor lamp, and overflowing bookshelves.',
     style: 'Classic',
+    image: inspReadingNook,
     gradient: 'linear-gradient(135deg, #2D6B4F 0%, #3CB371 40%, #F5E6C4 100%)',
-    icon: <BookOpen size={32} />,
     room: { shape: 'rectangular', width: 3, depth: 3, height: 2.6, wallColor: '#F0F5F2', floorType: 'carpet', floorColor: '#8B7355' },
     furnitureCount: 4,
     tags: ['intimate', 'bookish', 'cozy'],
@@ -94,8 +100,8 @@ const INSPIRATIONS: InspirationDesign[] = [
     name: 'Studio Apartment',
     description: 'Smart space-saving design for compact living — multifunctional furniture and open flow.',
     style: 'Modern',
+    image: inspStudioApartment,
     gradient: 'linear-gradient(135deg, #1A365D 0%, #4A7FB5 40%, #F5F0EB 100%)',
-    icon: <Armchair size={32} />,
     room: { shape: 'studio', width: 6, depth: 4, height: 2.6, wallColor: '#F5F0EB', floorType: 'tile', floorColor: '#D4B896' },
     furnitureCount: 5,
     tags: ['compact', 'smart', 'functional'],
@@ -109,7 +115,7 @@ export default function InspirationPage() {
   const handleUseTemplate = (insp: InspirationDesign) => {
     loadDesign({
       name: insp.name,
-      room: insp.room,
+      room: { ...insp.room, openings: [] },
       furniture: [],
       selectedItemId: null,
     });
@@ -139,15 +145,24 @@ export default function InspirationPage() {
             transition={{ delay: idx * 0.08, duration: 0.4 }}
             whileHover={{ y: -6 }}
           >
-            {/* Hero Gradient */}
+            {/* Hero Image */}
             <div
               className="inspiration-card-hero"
-              style={{ background: insp.gradient }}
+              style={{ background: insp.gradient, position: 'relative', overflow: 'hidden' }}
             >
-              <div className="inspiration-card-icon">
-                {insp.icon}
-              </div>
-              <span className="inspiration-card-style badge">{insp.style}</span>
+              <img
+                src={insp.image}
+                alt={insp.name}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  opacity: 0.92,
+                }}
+              />
+              <span className="inspiration-card-style badge" style={{ position: 'absolute', top: 12, right: 12, zIndex: 1, backgroundColor: 'rgba(0,0,0,0.6)', color: 'white' }}>{insp.style}</span>
             </div>
 
             {/* Content */}

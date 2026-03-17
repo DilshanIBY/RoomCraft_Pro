@@ -8,13 +8,14 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Plus, Search, Clock, Trash2, Copy, Pencil, Check, X,
-  Tag, FolderOpen, ArrowRight, SlidersHorizontal, ChevronDown,
+  Tag, ArrowRight, SlidersHorizontal, ChevronDown,
 } from 'lucide-react';
 import { db } from '../db/db';
 import type { Design } from '../db/db';
 import { useAuthStore } from '../store/useAuthStore';
 import { useAppStore } from '../store/useAppStore';
 import designPlaceholder from '../assets/images/design-placeholder.png';
+import emptyDesignsImg from '../assets/images/empty-designs.png';
 
 const SORT_OPTIONS = [
   { id: 'date-desc', label: 'Newest First' },
@@ -72,7 +73,7 @@ export default function MyDesignsPage() {
     useAppStore.getState().loadDesign({
       id: d.id,
       name: d.name,
-      room: d.roomConfig,
+      room: { ...d.roomConfig, openings: d.roomConfig.openings || [] },
       furniture: d.furniture,
       selectedItemId: null,
     });
@@ -200,7 +201,7 @@ export default function MyDesignsPage() {
       {/* Grid */}
       {filtered.length === 0 ? (
         <div className="catalogue-empty" style={{ marginTop: 'var(--space-12)' }}>
-          <FolderOpen size={48} />
+          <img src={emptyDesignsImg} alt="No designs" style={{ width: 140, height: 140, objectFit: 'contain' }} />
           <h3>{designs.length === 0 ? 'No designs yet' : 'No matching designs'}</h3>
           <p>{designs.length === 0 ? 'Create your first room design to get started.' : 'Try adjusting your search or filters.'}</p>
           {designs.length === 0 && (

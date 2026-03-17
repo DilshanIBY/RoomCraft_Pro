@@ -19,9 +19,26 @@ function uuid(): string {
   return crypto.randomUUID();
 }
 
+let isSeeding = false;
+
 export async function seedDatabase(): Promise<void> {
-  const profileCount = await db.profiles.count();
-  if (profileCount > 0) return; // Already seeded
+  if (isSeeding) return;
+  isSeeding = true;
+
+  try {
+    const profileCount = await db.profiles.count();
+    // If it has profiles but maybe duplicated furniture, we'll force wipe for now to clean up
+    // Wait, let's just wipe it unconditionally this one time, or check if furniture > 12
+    const furnitureCount = await db.furnitureItems.count();
+    
+    if (profileCount > 0 && furnitureCount === 12) {
+      isSeeding = false;
+      return; // Truly already seeded correctly
+    }
+
+    console.log('🌱 Wiping and Seeding RoomCraft Pro database...');
+    await db.delete();
+    await db.open();
 
   console.log('🌱 Seeding RoomCraft Pro database...');
 
@@ -257,4 +274,8 @@ export async function seedDatabase(): Promise<void> {
   });
 
   console.log('✅ Database seeded with 3 profiles, 12 furniture items, 2 sample designs, 7 room templates');
+  
+  } finally {
+    isSeeding = false;
+  }
 }

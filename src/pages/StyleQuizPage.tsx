@@ -10,6 +10,7 @@ import {
   ArrowLeft, Sparkles, Check, Home,
   Palette, Star, DollarSign, Target,
 } from 'lucide-react';
+import quizResultImg from '../assets/images/quiz-result.png';
 
 interface QuizQuestion {
   id: string;
@@ -125,7 +126,7 @@ export default function StyleQuizPage() {
           >
             <div className="quiz-result-header">
               <div className="quiz-result-icon">
-                <Sparkles size={32} />
+                <img src={quizResultImg} alt="Your style profile" style={{ width: 80, height: 80, objectFit: 'contain' }} />
               </div>
               <h1>Your Style Profile</h1>
               <p>Based on your preferences, here's what we recommend:</p>

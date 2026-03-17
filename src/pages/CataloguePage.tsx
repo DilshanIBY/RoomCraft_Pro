@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { db } from '../db/db';
 import type { FurnitureItem, FurnitureCategory, FurnitureStyle } from '../db/db';
+import emptyCatalogue from '../assets/images/empty-catalogue.png';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 
@@ -283,7 +284,7 @@ export default function CataloguePage() {
         <div className="catalogue-content">
           {filtered.length === 0 ? (
             <div className="catalogue-empty">
-              <Armchair size={48} />
+              <img src={emptyCatalogue} alt="No items found" style={{ width: 120, height: 120, objectFit: 'contain', opacity: 0.85 }} />
               <h3>No items found</h3>
               <p>Try adjusting your filters or search terms.</p>
               <button className="btn btn-gold btn-sm" onClick={clearFilters}>Clear All Filters</button>

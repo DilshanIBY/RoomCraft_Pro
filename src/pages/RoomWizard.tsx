@@ -65,7 +65,7 @@ export default function RoomWizard() {
   };
 
   const finish = async () => {
-    const room = { shape,width:w,depth:d,height:h,wallColor:wc,floorType:ft,floorColor:fc };
+    const room = { shape,width:w,depth:d,height:h,wallColor:wc,floorType:ft,floorColor:fc,openings:[] };
     const id = crypto.randomUUID(); const now = new Date();
     const name = `${shape.charAt(0).toUpperCase()+shape.slice(1)} Room — ${w}m × ${d}m`;
     await db.designs.add({ id, userId:user!.id, name, roomConfig:room, furniture:[], tags:[shape,ft], isPublic:false, createdAt:now, updatedAt:now });

@@ -10,6 +10,7 @@ import './App.css';
 import SplashPage from './pages/SplashPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import DashboardLayout, { DesignerDashboard, CustomerDashboard, AdminDashboard } from './pages/DashboardPage';
 import RoomWizard from './pages/RoomWizard';
 import DesignerWorkspace from './pages/DesignerWorkspace';
@@ -20,6 +21,15 @@ import StyleQuizPage from './pages/StyleQuizPage';
 import WishlistPage from './pages/WishlistPage';
 import EnquiryPage from './pages/EnquiryPage';
 import InspirationPage from './pages/InspirationPage';
+
+// Admin Sub-Pages
+import AdminAnalyticsPage from './pages/AdminAnalyticsPage';
+import AdminDesignersPage from './pages/AdminDesignersPage';
+import AdminCustomersPage from './pages/AdminCustomersPage';
+import AdminDesignsPage from './pages/AdminDesignsPage';
+import AdminCataloguePage from './pages/AdminCataloguePage';
+import AdminTemplatesPage from './pages/AdminTemplatesPage';
+import AdminEnquiriesPage from './pages/AdminEnquiriesPage';
 
 // ─── Protected Route ───
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) {
@@ -74,6 +84,7 @@ function AppContent() {
       <Route path="/" element={<SplashPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/room-wizard" element={<ProtectedRoute><RoomWizard /></ProtectedRoute>} />
       <Route path="/designer" element={<ProtectedRoute><DesignerWorkspace /></ProtectedRoute>} />
       <Route path="/style-quiz" element={<ProtectedRoute><StyleQuizPage /></ProtectedRoute>} />
@@ -85,7 +96,15 @@ function AppContent() {
         <Route path="/wishlist" element={<WishlistPage />} />
         <Route path="/inspiration" element={<InspirationPage />} />
         <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/admin/*" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
+        {/* Admin Sub-Pages */}
+        <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['admin']}><AdminAnalyticsPage /></ProtectedRoute>} />
+        <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/admin/designers" element={<ProtectedRoute allowedRoles={['admin']}><AdminDesignersPage /></ProtectedRoute>} />
+        <Route path="/admin/customers" element={<ProtectedRoute allowedRoles={['admin']}><AdminCustomersPage /></ProtectedRoute>} />
+        <Route path="/admin/designs" element={<ProtectedRoute allowedRoles={['admin']}><AdminDesignsPage /></ProtectedRoute>} />
+        <Route path="/admin/catalogue" element={<ProtectedRoute allowedRoles={['admin']}><AdminCataloguePage /></ProtectedRoute>} />
+        <Route path="/admin/templates" element={<ProtectedRoute allowedRoles={['admin']}><AdminTemplatesPage /></ProtectedRoute>} />
+        <Route path="/admin/enquiries" element={<ProtectedRoute allowedRoles={['admin']}><AdminEnquiriesPage /></ProtectedRoute>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

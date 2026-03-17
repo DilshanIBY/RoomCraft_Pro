@@ -45,6 +45,7 @@ export default function DesignerWorkspace() {
     moveFurniture, rotateFurniture, scaleFurniture, colorFurniture,
     colorAllFurniture, applyShade, applyPalette,
     addOpening, removeOpening, updateOpening,
+    setRoom,
   } = store;
 
   const [shadeValue, setShadeValue] = useState(0.5);
@@ -258,30 +259,29 @@ export default function DesignerWorkspace() {
       {/* Toolbar */}
       <div className="workspace-toolbar">
         <div className="toolbar-left">
+          <button className="btn btn-ghost btn-sm" onClick={() => nav('/dashboard')}><ArrowLeft size={14} /></button>
           <div className="toolbar-logo">
-            <div className="toolbar-logo-icon"><Boxes size={14} color="#1A1210"/></div>
-            <span className="toolbar-logo-text">RC</span>
+            <div className="toolbar-logo-icon"><Boxes size={14} color="#1A1210" /></div>
+            <span className="toolbar-logo-text"></span>
           </div>
-          <button className="btn btn-ghost btn-sm" onClick={() => nav('/dashboard')}><ArrowLeft size={14}/> Back</button>
-          <div className="toolbar-divider"/>
-          <span style={{fontSize:'var(--text-sm)',fontWeight:600,fontFamily:'var(--font-heading)'}}>{currentDesign.name}</span>
+          <span style={{ fontSize: 'var(--text-sm)', fontWeight: 600, fontFamily: 'var(--font-heading)' }}>{currentDesign.name}</span>
         </div>
         <div className="toolbar-center">
           <div className="view-toggle">
-            <button className={`view-toggle-btn ${viewMode==='2d'?'active':''}`} onClick={()=>setViewMode('2d')}><Grid3x3 size={14}/> 2D</button>
-            <button className={`view-toggle-btn ${viewMode==='3d'?'active':''}`} onClick={()=>setViewMode('3d')}><Box size={14}/> 3D</button>
+            <button className={`view-toggle-btn ${viewMode === '2d' ? 'active' : ''}`} onClick={() => setViewMode('2d')}><Grid3x3 size={14} /> 2D</button>
+            <button className={`view-toggle-btn ${viewMode === '3d' ? 'active' : ''}`} onClick={() => setViewMode('3d')}><Box size={14} /> 3D</button>
           </div>
         </div>
         <div className="toolbar-right">
-          <button className="btn btn-icon btn-ghost" onClick={undo} disabled={undoStack.length===0} title="Undo (Ctrl+Z)"><Undo2 size={16}/></button>
-          <button className="btn btn-icon btn-ghost" onClick={redo} disabled={redoStack.length===0} title="Redo (Ctrl+Y)"><Redo2 size={16}/></button>
-          <div className="toolbar-divider"/>
-          <button className="btn btn-icon btn-ghost" onClick={toggleTheme} title="Toggle theme">{theme==='light'?<Moon size={16}/>:<Sun size={16}/>}</button>
-          <button className="btn btn-gold btn-sm" onClick={handleSave} aria-label="Save design"><Save size={14}/> Save</button>
+          <button className="btn btn-icon btn-ghost" onClick={undo} disabled={undoStack.length === 0} title="Undo (Ctrl+Z)"><Undo2 size={16} /></button>
+          <button className="btn btn-icon btn-ghost" onClick={redo} disabled={redoStack.length === 0} title="Redo (Ctrl+Y)"><Redo2 size={16} /></button>
+          <div className="toolbar-divider" />
+          <button className="btn btn-icon btn-ghost" onClick={toggleTheme} title="Toggle theme">{theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}</button>
+          <button className="btn btn-icon btn-ghost" onClick={handleScreenshot} title="Screenshot (3D)" aria-label="Take 3D screenshot"><Camera size={16} /></button>
+          <button className="btn btn-icon btn-ghost" onClick={handleShare} title="Export Design" aria-label="Export design as JSON"><Share2 size={16} /></button>
+          <button className="btn btn-emerald btn-sm" onClick={() => nav('/enquiry')} aria-label="Request a quote"><Send size={14} /> Request Quote</button>
           <button className="btn btn-glass btn-sm" onClick={handleSaveAsTemplate} aria-label="Save room as template">📐 Template</button>
-          <button className="btn btn-icon btn-ghost" onClick={handleScreenshot} title="Screenshot (3D)" aria-label="Take 3D screenshot"><Camera size={16}/></button>
-          <button className="btn btn-icon btn-ghost" onClick={handleShare} title="Export Design" aria-label="Export design as JSON"><Share2 size={16}/></button>
-          <button className="btn btn-emerald btn-sm" onClick={() => nav('/enquiry')} aria-label="Request a quote"><Send size={14}/> Request Quote</button>
+          <button className="btn btn-gold btn-sm" onClick={handleSave} aria-label="Save design"><Save size={14} /> Save</button>
         </div>
       </div>
 
@@ -293,67 +293,70 @@ export default function DesignerWorkspace() {
       {/* Body */}
       <div className="workspace-body">
         {/* Left Sidebar — Catalogue */}
-        <div className={`workspace-sidebar-left ${leftSidebarOpen?'':'collapsed'}`}>
-          {leftSidebarOpen ? (
-            <>
-              <div className="catalogue-header">
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                  <h3>Catalogue</h3>
-                  <button className="btn btn-icon btn-ghost btn-sm" onClick={toggleLeftSidebar}><ChevronLeft size={14}/></button>
-                </div>
-                <div style={{position:'relative',marginTop:'var(--space-2)'}}>
-                  <input className="glass-input catalogue-search" placeholder="Search furniture..." value={search} onChange={e=>setSearch(e.target.value)}/>
-                  <Search size={12} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',color:'var(--text-muted)'}}/>
-                </div>
-              </div>
-              <div className="catalogue-tabs">
-                {categories.map(c=>(
-                  <button key={c.id} className={`catalogue-tab ${activeTab===c.id?'active':''}`} onClick={()=>setActiveTab(c.id)}>{c.label}</button>
-                ))}
-              </div>
-              <div className="catalogue-items">
-                {filtered.map(item=>(
-                  <div
-                    key={item.id}
-                    className="catalogue-item"
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, item)}
-                    onClick={() => handleAddItem(item)}
-                    title={`Drag or click to add ${item.name}`}
-                  >
-                    <div className="catalogue-item-drag"><GripVertical size={10} /></div>
-                    <div className="catalogue-item-thumb">
-                      <img
-                        src={item.thumbnailUrl}
-                        alt={item.name}
-                        className="catalogue-item-thumb-img"
-                        onError={(e) => {
-                          const el = e.target as HTMLImageElement;
-                          el.style.display = 'none';
-                          el.parentElement!.textContent = categoryEmoji[item.category] || '📦';
-                        }}
-                      />
-                    </div>
-                    <div className="catalogue-item-info">
-                      <div className="catalogue-item-name">{item.name}</div>
-                      <div className="catalogue-item-dims">{item.dimensions.width}×{item.dimensions.depth}m</div>
-                    </div>
-                  </div>
-                ))}
-                {filtered.length === 0 && (
-                  <div className="catalogue-empty">
-                    <img src={emptyCatalogue} alt="No items found" className="catalogue-empty-img" />
-                    <p>We couldn't find any items matching your search.</p>
-                  </div>
-                )}
-              </div>
-            </>
-          ) : (
-            <div style={{display:'flex',flexDirection:'column',alignItems:'center',paddingTop:'var(--space-4)'}}>
-              <button className="btn btn-icon btn-ghost" onClick={toggleLeftSidebar}><ChevronRight size={14}/></button>
+        <div className={`workspace-sidebar-left ${leftSidebarOpen ? '' : 'collapsed'}`}>
+          <div className="catalogue-header">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3>Catalogue</h3>
+              <button className="btn btn-icon btn-ghost btn-sm" onClick={toggleLeftSidebar}><ChevronLeft size={14} /></button>
             </div>
-          )}
+            <div style={{ position: 'relative', marginTop: 'var(--space-2)' }}>
+              <input className="glass-input catalogue-search" placeholder="Search furniture..." value={search} onChange={e => setSearch(e.target.value)} />
+              <Search size={12} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            </div>
+          </div>
+          <div className="catalogue-tabs">
+            {categories.map(c => (
+              <button key={c.id} className={`catalogue-tab ${activeTab === c.id ? 'active' : ''}`} onClick={() => setActiveTab(c.id)}>{c.label}</button>
+            ))}
+          </div>
+          <div className="catalogue-items">
+            {filtered.map(item => (
+              <div
+                key={item.id}
+                className="catalogue-item"
+                draggable
+                onDragStart={(e) => handleDragStart(e, item)}
+                onClick={() => handleAddItem(item)}
+                title={`Drag or click to add ${item.name}`}
+              >
+                <div className="catalogue-item-drag"><GripVertical size={10} /></div>
+                <div className="catalogue-item-thumb">
+                  <img
+                    src={item.thumbnailUrl}
+                    alt={item.name}
+                    className="catalogue-item-thumb-img"
+                    onError={(e) => {
+                      const el = e.target as HTMLImageElement;
+                      el.style.display = 'none';
+                      el.parentElement!.textContent = categoryEmoji[item.category] || '📦';
+                    }}
+                  />
+                </div>
+                <div className="catalogue-item-info">
+                  <div className="catalogue-item-name">{item.name}</div>
+                  <div className="catalogue-item-dims">{item.dimensions.width}×{item.dimensions.depth}m</div>
+                </div>
+              </div>
+            ))}
+            {filtered.length === 0 && (
+              <div className="catalogue-empty">
+                <img src={emptyCatalogue} alt="No items found" className="catalogue-empty-img" />
+                <p>We couldn't find any items matching your search.</p>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Floating Left Toggle */}
+        {!leftSidebarOpen && (
+          <button
+            className="btn btn-icon btn-glass floating-toggle-btn"
+            onClick={toggleLeftSidebar}
+            style={{ position: 'absolute', left: 'var(--space-4)', top: '50%', transform: 'translateY(-50%)', zIndex: 20 }}
+          >
+            <ChevronRight size={16} />
+          </button>
+        )}
 
         {/* Canvas */}
         <div
@@ -380,7 +383,7 @@ export default function DesignerWorkspace() {
                 onClick={toggleGrid}
                 title="Toggle Grid (G)"
               >
-                <Grid3x3 size={14}/>
+                <Grid3x3 size={14} />
               </button>
 
               <button
@@ -388,18 +391,18 @@ export default function DesignerWorkspace() {
                 onClick={toggleSnap}
                 title="Toggle Snap-to-Grid"
               >
-                <Magnet size={14}/>
+                <Magnet size={14} />
               </button>
 
-              <div className="canvas-tool-divider"/>
+              <div className="canvas-tool-divider" />
 
-              <div className="grid-size-dropdown" style={{position:'relative'}}>
+              <div className="grid-size-dropdown" style={{ position: 'relative' }}>
                 <button
                   className="canvas-tool-btn"
                   onClick={() => setShowGridMenu(!showGridMenu)}
                   title="Grid Size"
                 >
-                  {gridSize}m <ChevronDown size={10}/>
+                  {gridSize}m <ChevronDown size={10} />
                 </button>
                 {showGridMenu && (
                   <div className="grid-size-menu">
@@ -416,27 +419,27 @@ export default function DesignerWorkspace() {
                 )}
               </div>
 
-              <div className="canvas-tool-divider"/>
+              <div className="canvas-tool-divider" />
 
-              <button className="canvas-tool-btn" onClick={() => sendCanvasCommand('zoomOut')} title="Zoom Out"><ZoomOut size={14}/></button>
-              <button className="canvas-tool-btn" onClick={() => sendCanvasCommand('zoomIn')} title="Zoom In"><ZoomIn size={14}/></button>
-              <button className="canvas-tool-btn" onClick={() => sendCanvasCommand('fit')} title="Fit to Room"><Maximize2 size={14}/></button>
+              <button className="canvas-tool-btn" onClick={() => sendCanvasCommand('zoomOut')} title="Zoom Out"><ZoomOut size={14} /></button>
+              <button className="canvas-tool-btn" onClick={() => sendCanvasCommand('zoomIn')} title="Zoom In"><ZoomIn size={14} /></button>
+              <button className="canvas-tool-btn" onClick={() => sendCanvasCommand('fit')} title="Fit to Room"><Maximize2 size={14} /></button>
 
-              <div className="canvas-tool-divider"/>
+              <div className="canvas-tool-divider" />
 
               {/* Door/Window placement */}
-              <div className="grid-size-dropdown" style={{position:'relative'}}>
+              <div className="grid-size-dropdown" style={{ position: 'relative' }}>
                 <button
                   className="canvas-tool-btn"
                   onClick={() => setShowOpeningMenu(!showOpeningMenu)}
                   title="Add Door / Window"
                 >
-                  <DoorOpen size={14}/> <ChevronDown size={10}/>
+                  <DoorOpen size={14} /> <ChevronDown size={10} />
                 </button>
                 {showOpeningMenu && (
-                  <div className="grid-size-menu" style={{width:160}}>
-                    <div style={{padding:'4px 8px',fontSize:'var(--text-xs)',color:'var(--text-muted)',fontWeight:600}}>Add Door</div>
-                    {(['north','south','east','west'] as WallSide[]).map(wall => (
+                  <div className="grid-size-menu" style={{ width: 160 }}>
+                    <div style={{ padding: '4px 8px', fontSize: 'var(--text-xs)', color: 'var(--text-muted)', fontWeight: 600 }}>Add Door</div>
+                    {(['north', 'south', 'east', 'west'] as WallSide[]).map(wall => (
                       <button
                         key={`door-${wall}`}
                         className="grid-size-option"
@@ -445,8 +448,8 @@ export default function DesignerWorkspace() {
                         🚪 {wall.charAt(0).toUpperCase() + wall.slice(1)} Wall
                       </button>
                     ))}
-                    <div style={{padding:'4px 8px',fontSize:'var(--text-xs)',color:'var(--text-muted)',fontWeight:600,borderTop:'1px solid var(--border-glass)',marginTop:4,paddingTop:8}}>Add Window</div>
-                    {(['north','south','east','west'] as WallSide[]).map(wall => (
+                    <div style={{ padding: '4px 8px', fontSize: 'var(--text-xs)', color: 'var(--text-muted)', fontWeight: 600, borderTop: '1px solid var(--border-glass)', marginTop: 4, paddingTop: 8 }}>Add Window</div>
+                    {(['north', 'south', 'east', 'west'] as WallSide[]).map(wall => (
                       <button
                         key={`win-${wall}`}
                         className="grid-size-option"
@@ -463,224 +466,257 @@ export default function DesignerWorkspace() {
         </div>
 
         {/* Right Sidebar — Properties */}
-        <div className={`workspace-sidebar-right ${rightSidebarOpen?'':'collapsed'}`}>
-          {rightSidebarOpen && (
+        <div className={`workspace-sidebar-right ${rightSidebarOpen ? '' : 'collapsed'}`}>
+          <div className="properties-header">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3>{selectedFurniture ? 'Item Properties' : 'Room Properties'}</h3>
+              <button className="btn btn-icon btn-ghost btn-sm" onClick={toggleRightSidebar}><ChevronRight size={14} /></button>
+            </div>
+          </div>
+          {selectedFurniture && selectedItem ? (
             <>
-              <div className="properties-header">
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                  <h3>{selectedFurniture ? 'Item Properties' : 'Room Properties'}</h3>
-                  <button className="btn btn-icon btn-ghost btn-sm" onClick={toggleRightSidebar}><ChevronRight size={14}/></button>
+              <div className="properties-section">
+                <h4>Selected Item</h4>
+                <p style={{ fontSize: 'var(--text-sm)', fontWeight: 600 }}>{selectedItem.name}</p>
+                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', textTransform: 'capitalize' }}>{selectedItem.category.replace('_', ' ')}</p>
+              </div>
+              <div className="properties-section">
+                <h4><Move size={12} style={{ marginRight: 4 }} /> Position</h4>
+                <div className="properties-grid">
+                  <div className="property-input">
+                    <span className="property-label">X</span>
+                    <input
+                      className="glass-input"
+                      type="number"
+                      step="0.1"
+                      value={selectedFurniture.x.toFixed(2)}
+                      onChange={(e) => handlePropChange('x', e.target.value)}
+                    />
+                    <span className="property-unit">m</span>
+                  </div>
+                  <div className="property-input">
+                    <span className="property-label">Z</span>
+                    <input
+                      className="glass-input"
+                      type="number"
+                      step="0.1"
+                      value={selectedFurniture.z.toFixed(2)}
+                      onChange={(e) => handlePropChange('z', e.target.value)}
+                    />
+                    <span className="property-unit">m</span>
+                  </div>
                 </div>
               </div>
-              {selectedFurniture && selectedItem ? (
-                <>
-                  <div className="properties-section">
-                    <h4>Selected Item</h4>
-                    <p style={{fontSize:'var(--text-sm)',fontWeight:600}}>{selectedItem.name}</p>
-                    <p style={{fontSize:'var(--text-xs)',color:'var(--text-muted)',textTransform:'capitalize'}}>{selectedItem.category.replace('_',' ')}</p>
-                  </div>
-                  <div className="properties-section">
-                    <h4><Move size={12} style={{marginRight:4}}/> Position</h4>
-                    <div className="properties-grid">
-                      <div className="property-input">
-                        <span className="property-label">X</span>
-                        <input
-                          className="glass-input"
-                          type="number"
-                          step="0.1"
-                          value={selectedFurniture.x.toFixed(2)}
-                          onChange={(e) => handlePropChange('x', e.target.value)}
-                        />
-                        <span className="property-unit">m</span>
-                      </div>
-                      <div className="property-input">
-                        <span className="property-label">Z</span>
-                        <input
-                          className="glass-input"
-                          type="number"
-                          step="0.1"
-                          value={selectedFurniture.z.toFixed(2)}
-                          onChange={(e) => handlePropChange('z', e.target.value)}
-                        />
-                        <span className="property-unit">m</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="properties-section">
-                    <h4><RotateCw size={12} style={{marginRight:4}}/> Transform</h4>
-                    <div className="properties-grid">
-                      <div className="property-input">
-                        <span className="property-label">Rotation</span>
-                        <input
-                          className="glass-input"
-                          type="number"
-                          step="15"
-                          value={selectedFurniture.rotation}
-                          onChange={(e) => handlePropChange('rotation', e.target.value)}
-                        />
-                        <span className="property-unit">°</span>
-                      </div>
-                      <div className="property-input">
-                        <span className="property-label">Scale</span>
-                        <input
-                          className="glass-input"
-                          type="number"
-                          step="0.1"
-                          min="0.1"
-                          max="5"
-                          value={selectedFurniture.scale}
-                          onChange={(e) => handlePropChange('scale', e.target.value)}
-                        />
-                        <span className="property-unit">×</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="properties-section">
-                    <h4><Palette size={12} style={{marginRight:4}}/> Appearance</h4>
-                    <div style={{display:'flex',gap:'var(--space-2)',flexWrap:'wrap'}}>
-                      {selectedItem.availableColors.map(c=>(
-                        <div key={c} className={`wizard-swatch ${selectedFurniture.color===c?'selected':''}`} style={{background:c,width:28,height:28}} onClick={()=>colorFurniture(selectedFurniture.id,c)}/>
-                      ))}
-                    </div>
-                    <button
-                      className="btn btn-ghost btn-sm"
-                      style={{marginTop:'var(--space-2)',width:'100%',fontSize:'var(--text-xs)'}}
-                      onClick={() => colorAllFurniture(selectedFurniture.color)}
-                      title="Apply this color to all furniture"
-                    >
-                      <Palette size={12}/> Apply to All Items
-                    </button>
-                  </div>
-                  <div className="properties-section">
-                    <h4>Shade / Tint</h4>
+              <div className="properties-section">
+                <h4><RotateCw size={12} style={{ marginRight: 4 }} /> Transform</h4>
+                <div className="properties-grid">
+                  <div className="property-input">
+                    <span className="property-label">Rotation</span>
                     <input
-                      type="range"
-                      min="0.1"
-                      max="0.9"
-                      step="0.05"
-                      value={shadeValue}
-                      onChange={(e) => {
-                        const val = parseFloat(e.target.value);
-                        setShadeValue(val);
-                        applyShade(selectedFurniture.id, val);
-                      }}
-                      style={{width:'100%',accentColor:'var(--accent-gold)'}}
+                      className="glass-input"
+                      type="number"
+                      step="15"
+                      value={selectedFurniture.rotation}
+                      onChange={(e) => handlePropChange('rotation', e.target.value)}
                     />
-                    <div style={{display:'flex',justifyContent:'space-between',fontSize:'var(--text-xs)',color:'var(--text-muted)'}}>
-                      <span>Darker</span>
-                      <span>Lighter</span>
-                    </div>
+                    <span className="property-unit">°</span>
                   </div>
-                  <div className="properties-section" style={{display:'flex',gap:'var(--space-2)'}}>
-                    <button className="btn btn-danger btn-sm" style={{flex:1}} onClick={()=>removeFurniture(selectedFurniture.id)}><Trash2 size={14}/> Remove</button>
+                  <div className="property-input">
+                    <span className="property-label">Scale</span>
+                    <input
+                      className="glass-input"
+                      type="number"
+                      step="0.1"
+                      min="0.1"
+                      max="5"
+                      value={selectedFurniture.scale}
+                      onChange={(e) => handlePropChange('scale', e.target.value)}
+                    />
+                    <span className="property-unit">×</span>
                   </div>
-                </>
-              ) : (
-                <>
-                  <div className="properties-section">
-                    <h4>Room Info</h4>
-                    <div className="wizard-summary-row"><span>Shape</span><span style={{textTransform:'capitalize'}}>{currentDesign.room.shape}</span></div>
-                    <div className="wizard-summary-row"><span>Size</span><span>{currentDesign.room.width}m × {currentDesign.room.depth}m</span></div>
-                    <div className="wizard-summary-row"><span>Height</span><span>{currentDesign.room.height}m</span></div>
-                    <div className="wizard-summary-row"><span>Area</span><span>{(currentDesign.room.width*currentDesign.room.depth).toFixed(1)}m²</span></div>
-                  </div>
-                  <div className="properties-section">
-                    <h4>Wall Color</h4>
-                    <div style={{width:32,height:32,borderRadius:'var(--radius-sm)',background:currentDesign.room.wallColor,border:'2px solid var(--border-glass)'}}/>
-                  </div>
-                  <div className="properties-section">
-                    <h4>Floor</h4>
-                    <p style={{fontSize:'var(--text-sm)',textTransform:'capitalize'}}>{currentDesign.room.floorType}</p>
-                    <div style={{width:32,height:32,borderRadius:'var(--radius-sm)',background:currentDesign.room.floorColor,border:'2px solid var(--border-glass)',marginTop:'var(--space-2)'}}/>
-                  </div>
-                  <div className="properties-section">
-                    <h4>Items Placed</h4>
-                    <p style={{fontSize:'var(--text-2xl)',fontFamily:'var(--font-display)',fontWeight:700}}>{currentDesign.furniture.length}</p>
-                  </div>
-                  <div className="properties-section">
-                    <h4><Palette size={12} style={{marginRight:4}}/> Color Palettes</h4>
-                    <div style={{display:'flex',flexDirection:'column',gap:'var(--space-2)'}}>
-                      {PALETTE_PRESETS.map(p => (
-                        <button
-                          key={p.name}
-                          className="btn btn-ghost btn-sm"
-                          style={{
-                            justifyContent:'flex-start',
-                            gap:'var(--space-2)',
-                            padding:'6px 8px',
-                            fontSize:'var(--text-xs)',
-                          }}
-                          onClick={() => applyPalette(p)}
-                        >
-                          <div style={{display:'flex',gap:2}}>
-                            {[p.wallColor, p.floorColor, ...p.furnitureColors.slice(0, 3)].map((c, i) => (
-                              <div key={i} style={{width:14,height:14,borderRadius:3,background:c,border:'1px solid var(--border-glass)'}}/>
-                            ))}
-                          </div>
-                          {p.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Doors & Windows list */}
-                  {currentDesign.room.openings.length > 0 && (
-                    <div className="properties-section">
-                      <h4><DoorOpen size={12} style={{marginRight:4}}/> Doors & Windows</h4>
-                      <div style={{display:'flex',flexDirection:'column',gap:'var(--space-2)'}}>
-                        {currentDesign.room.openings.map(op => (
-                          <div key={op.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'4px 0',borderBottom:'1px solid var(--border-glass)'}}>
-                            <span style={{fontSize:'var(--text-xs)'}}>
-                              {op.type === 'door' ? '🚪' : '🪟'} {op.wall} wall
-                              <span style={{color:'var(--text-muted)',marginLeft:4}}>{op.width}m</span>
-                            </span>
-                            <div style={{display:'flex',gap:4,alignItems:'center'}}>
-                              <input
-                                className="glass-input"
-                                type="number"
-                                step="0.1"
-                                min="0.3"
-                                max={op.wall === 'north' || op.wall === 'south' ? currentDesign.room.width : currentDesign.room.depth}
-                                value={op.position}
-                                onChange={(e) => updateOpening(op.id, { position: parseFloat(e.target.value) || op.position })}
-                                style={{width:48,fontSize:'var(--text-xs)',padding:'2px 4px'}}
-                                title="Position along wall"
-                              />
-                              <button
-                                className="btn btn-icon btn-ghost btn-sm"
-                                onClick={() => removeOpening(op.id)}
-                                title="Remove"
-                                style={{width:20,height:20}}
-                              >
-                                <Trash2 size={10}/>
-                              </button>
-                            </div>
-                          </div>
+                </div>
+              </div>
+              <div className="properties-section">
+                <h4><Palette size={12} style={{ marginRight: 4 }} /> Appearance</h4>
+                <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+                  {selectedItem.availableColors.map(c => (
+                    <div key={c} className={`wizard-swatch ${selectedFurniture.color === c ? 'selected' : ''}`} style={{ background: c, width: 28, height: 28 }} onClick={() => colorFurniture(selectedFurniture.id, c)} />
+                  ))}
+                </div>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  style={{ marginTop: 'var(--space-2)', width: '100%', fontSize: 'var(--text-xs)' }}
+                  onClick={() => colorAllFurniture(selectedFurniture.color)}
+                  title="Apply this color to all furniture"
+                >
+                  <Palette size={12} /> Apply to All Items
+                </button>
+              </div>
+              <div className="properties-section">
+                <h4>Shade / Tint</h4>
+                <input
+                  type="range"
+                  min="0.1"
+                  max="0.9"
+                  step="0.05"
+                  value={shadeValue}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    setShadeValue(val);
+                    applyShade(selectedFurniture.id, val);
+                  }}
+                  style={{ width: '100%', accentColor: 'var(--accent-gold)' }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
+                  <span>Darker</span>
+                  <span>Lighter</span>
+                </div>
+              </div>
+              <div className="properties-section" style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                <button className="btn btn-danger btn-sm" style={{ flex: 1 }} onClick={() => removeFurniture(selectedFurniture.id)}><Trash2 size={14} /> Remove</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="properties-section">
+                <h4>Room Info</h4>
+                <div className="wizard-summary-row"><span>Shape</span><span style={{ textTransform: 'capitalize' }}>{currentDesign.room.shape}</span></div>
+                <div className="wizard-summary-row"><span>Size</span><span>{currentDesign.room.width}m × {currentDesign.room.depth}m</span></div>
+                <div className="wizard-summary-row"><span>Height</span><span>{currentDesign.room.height}m</span></div>
+                <div className="wizard-summary-row"><span>Area</span><span>{(currentDesign.room.width * currentDesign.room.depth).toFixed(1)}m²</span></div>
+              </div>
+              <div className="properties-section">
+                <h4>Wall Color</h4>
+                <div style={{ width: 32, height: 32, borderRadius: 'var(--radius-sm)', background: currentDesign.room.wallColor, border: '2px solid var(--border-glass)' }} />
+              </div>
+              <div className="properties-section">
+                <h4>Floor</h4>
+                <p style={{ fontSize: 'var(--text-sm)', textTransform: 'capitalize' }}>{currentDesign.room.floorType}</p>
+                <div style={{ width: 32, height: 32, borderRadius: 'var(--radius-sm)', background: currentDesign.room.floorColor, border: '2px solid var(--border-glass)', marginTop: 'var(--space-2)' }} />
+              </div>
+              <div className="properties-section">
+                <h4>Items Placed</h4>
+                <p style={{ fontSize: 'var(--text-2xl)', fontFamily: 'var(--font-display)', fontWeight: 700 }}>{currentDesign.furniture.length}</p>
+              </div>
+              <div className="properties-section">
+                <h4><Palette size={12} style={{ marginRight: 4 }} /> Color Palettes</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                  {PALETTE_PRESETS.map(p => (
+                    <button
+                      key={p.name}
+                      className="btn btn-ghost btn-sm"
+                      style={{
+                        justifyContent: 'flex-start',
+                        gap: 'var(--space-2)',
+                        padding: '6px 8px',
+                        fontSize: 'var(--text-xs)',
+                      }}
+                      onClick={() => applyPalette(p)}
+                    >
+                      <div style={{ display: 'flex', gap: 2 }}>
+                        {[p.wallColor, p.floorColor, ...p.furnitureColors.slice(0, 3)].map((c, i) => (
+                          <div key={i} style={{ width: 14, height: 14, borderRadius: 3, background: c, border: '1px solid var(--border-glass)' }} />
                         ))}
                       </div>
-                    </div>
-                  )}
-                </>
+                      {p.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Doors & Windows list */}
+              {currentDesign.room.openings.length > 0 && (
+                <div className="properties-section">
+                  <h4><DoorOpen size={12} style={{ marginRight: 4 }} /> Doors & Windows</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                    {currentDesign.room.openings.map(op => (
+                      <div key={op.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid var(--border-glass)' }}>
+                        <span style={{ fontSize: 'var(--text-xs)' }}>
+                          {op.type === 'door' ? '🚪' : '🪟'} {op.wall} wall
+                          <span style={{ color: 'var(--text-muted)', marginLeft: 4 }}>{op.width}m</span>
+                        </span>
+                        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                          <input
+                            className="glass-input"
+                            type="number"
+                            step="0.1"
+                            min="0.3"
+                            max={op.wall === 'north' || op.wall === 'south' ? currentDesign.room.width : currentDesign.room.depth}
+                            value={op.position}
+                            onChange={(e) => updateOpening(op.id, { position: parseFloat(e.target.value) || op.position })}
+                            style={{ width: 48, fontSize: 'var(--text-xs)', padding: '2px 4px' }}
+                            title="Position along wall"
+                          />
+                          <button
+                            className="btn btn-icon btn-ghost btn-sm"
+                            onClick={() => removeOpening(op.id)}
+                            title="Remove"
+                            style={{ width: 20, height: 20 }}
+                          >
+                            <Trash2 size={10} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </>
           )}
         </div>
+
+        {/* Floating Right Toggle */}
+        {!rightSidebarOpen && (
+          <button
+            className="btn btn-icon btn-glass floating-toggle-btn"
+            onClick={toggleRightSidebar}
+            style={{ position: 'absolute', right: 'var(--space-4)', top: '50%', transform: 'translateY(-50%)', zIndex: 20 }}
+          >
+            <ChevronLeft size={16} />
+          </button>
+        )}
       </div>
 
       {/* Status Bar */}
       <div className="workspace-statusbar">
-        <span>Room: {currentDesign.room.width}m × {currentDesign.room.depth}m × {currentDesign.room.height}m</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          Room: 
+          <input 
+            type="number" step="0.5" min="1" max="20"
+            value={currentDesign.room.width} onChange={e => setRoom({width: parseFloat(e.target.value)||currentDesign.room.width})} 
+            style={{ width: 36, background: 'transparent', border: 'none', borderBottom: '1px solid var(--border-glass)', color: 'inherit', fontFamily: 'inherit', textAlign: 'center', outline: 'none' }} 
+          />m × 
+          <input 
+            type="number" step="0.5" min="1" max="20"
+            value={currentDesign.room.depth} onChange={e => setRoom({depth: parseFloat(e.target.value)||currentDesign.room.depth})} 
+            style={{ width: 36, background: 'transparent', border: 'none', borderBottom: '1px solid var(--border-glass)', color: 'inherit', fontFamily: 'inherit', textAlign: 'center', outline: 'none' }} 
+          />m × 
+          <input 
+            type="number" step="0.1" min="2" max="5"
+            value={currentDesign.room.height} onChange={e => setRoom({height: parseFloat(e.target.value)||currentDesign.room.height})} 
+            style={{ width: 32, background: 'transparent', border: 'none', borderBottom: '1px solid var(--border-glass)', color: 'inherit', fontFamily: 'inherit', textAlign: 'center', outline: 'none' }} 
+          />m
+        </span>
         <span>Items: {currentDesign.furniture.length}</span>
         <span>View: {viewMode.toUpperCase()}</span>
-        <span style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:'var(--space-2)'}}>
+        <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
           {lastAutoSave && (
-            <span className="status-badge" style={{display:'flex',alignItems:'center',gap:3}}>
-              <Clock size={9}/> Saved {Math.round((Date.now() - lastAutoSave.getTime()) / 1000)}s ago
+            <span className="status-badge" style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+              <Clock size={9} /> Saved {Math.round((Date.now() - lastAutoSave.getTime()) / 1000)}s ago
             </span>
           )}
           {snapEnabled && <span className="status-badge status-badge-gold">Snap</span>}
           {showGrid && <span className="status-badge">Grid {gridSize}m</span>}
-          Shape: {currentDesign.room.shape}
+          Shape: 
+          <select 
+            value={currentDesign.room.shape} 
+            onChange={e => setRoom({shape: e.target.value as any})} 
+            style={{ background: 'var(--surface-glass)', border: '1px solid var(--border-glass)', borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)', fontFamily: 'inherit', fontSize: 'inherit', padding: '2px 4px', outline: 'none', cursor: 'pointer' }}
+          >
+            <option value="rectangular">Rectangular</option>
+            <option value="l-shaped">L-Shaped</option>
+            <option value="t-shaped">T-Shaped</option>
+          </select>
         </span>
       </div>
     </div>

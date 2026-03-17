@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Heart, Trash2, ShoppingBag, ArrowRight, Armchair,
 } from 'lucide-react';
+import emptyWishlistImg from '../assets/images/empty-wishlist.png';
 import { db } from '../db/db';
 import type { FurnitureItem, WishlistItem } from '../db/db';
 import { useAuthStore } from '../store/useAuthStore';
@@ -86,14 +87,7 @@ export default function WishlistPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <div style={{
-            width: 80, height: 80,
-            background: 'var(--gradient-gold-subtle)',
-            borderRadius: '50%',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Heart size={36} style={{ color: 'var(--accent-gold)' }} />
-          </div>
+          <img src={emptyWishlistImg} alt="Empty wishlist" style={{ width: 140, height: 140, objectFit: 'contain' }} />
           <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-xl)' }}>
             Your wishlist is empty
           </h3>

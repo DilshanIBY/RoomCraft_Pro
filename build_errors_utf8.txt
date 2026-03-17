@@ -1,0 +1,1 @@
+﻿src/pages/RoomWizard.tsx(72,28): error TS2741: Property 'openings' is missing in type '{ shape: RoomShape; width: number; depth: number; height: number; wallColor: string; floorType: FloorType; floorColor: string; }' but required in type 'RoomConfig'.

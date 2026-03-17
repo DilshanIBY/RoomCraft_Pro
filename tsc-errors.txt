@@ -1,0 +1,11 @@
+﻿src/pages/AdminCustomersPage.tsx(8,18): error TS6133: 'UserCheck' is declared but its value is never read.
+src/pages/AdminCustomersPage.tsx(8,29): error TS6133: 'UserX' is declared but its value is never read.
+src/pages/AdminCustomersPage.tsx(9,18): error TS6133: 'ShoppingBag' is declared but its value is never read.
+src/pages/AdminCustomersPage.tsx(51,9): error TS6133: 'activeCount' is declared but its value is never read.
+src/pages/AdminDesignersPage.tsx(9,3): error TS6133: 'Mail' is declared but its value is never read.
+src/pages/AdminDesignersPage.tsx(9,9): error TS6133: 'Calendar' is declared but its value is never read.
+src/pages/AdminDesignersPage.tsx(12,24): error TS6196: 'Design' is declared but never used.
+src/pages/AdminDesignsPage.tsx(8,38): error TS6133: 'Eye' is declared but its value is never read.
+src/pages/DashboardPage.tsx(883,26): error TS6133: 'i' is declared but its value is never read.
+src/pages/RoomWizard.tsx(72,28): error TS2741: Property 'openings' is missing in type '{ shape: RoomShape; width: number; depth: number; height: number; wallColor: string; floorType: FloorType; floorColor: string; }' but required in type 'RoomConfig'.
+src/pages/SplashPage.tsx(61,15): error TS2322: Type 'number' is not assignable to type 'never'.

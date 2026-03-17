@@ -157,7 +157,7 @@ const defaultDesign: CurrentDesign = {
 export const useAppStore = create<AppState>((set, get) => ({
   currentDesign: { ...defaultDesign },
   viewMode: '2d',
-  theme: (localStorage.getItem('rc_theme') as 'light' | 'dark') || 'light',
+  theme: (localStorage.getItem('rc_theme') as 'light' | 'dark') || 'dark',
   leftSidebarOpen: true,
   rightSidebarOpen: true,
   gridSize: 0.5,

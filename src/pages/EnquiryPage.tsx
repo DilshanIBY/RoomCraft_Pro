@@ -7,13 +7,14 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ClipboardList, User, CheckCircle2, ArrowRight, ArrowLeft,
-  Home, Armchair, Palette, Ruler, Send, Sparkles,
+  Home, Armchair, Palette, Ruler, Send,
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { db } from '../db/db';
 import type { FurnitureItem } from '../db/db';
 import { useNavigate } from 'react-router-dom';
+import enquirySuccessImg from '../assets/images/enquiry-success.png';
 
 const STEPS = [
   { id: 1, label: 'Design Summary', icon: ClipboardList },
@@ -301,7 +302,7 @@ export default function EnquiryPage() {
           >
             <div className="glass-card enquiry-success-card">
               <div className="enquiry-success-icon">
-                <Sparkles size={40} />
+                <img src={enquirySuccessImg} alt="Success" style={{ width: 100, height: 100, objectFit: 'contain' }} />
               </div>
               <h2>Quote Request Submitted!</h2>
               <p>
