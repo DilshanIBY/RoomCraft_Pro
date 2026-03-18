@@ -123,15 +123,7 @@ function Room() {
         />
       </mesh>
 
-      {/* Room edge lines for definition */}
-      <lineSegments>
-        <edgesGeometry args={[new THREE.BoxGeometry(width, height, depth)]} />
-        <lineBasicMaterial color="#B8A88A" transparent opacity={0.3} />
-      </lineSegments>
-      <mesh position={[width / 2, height / 2, depth / 2]}>
-        <boxGeometry args={[width, height, depth]} />
-        <meshBasicMaterial visible={false} />
-      </mesh>
+
 
       {/* Baseboard trim */}
       <mesh position={[width / 2, 0.03, 0.01]}>
