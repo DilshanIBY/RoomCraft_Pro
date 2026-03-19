@@ -199,7 +199,7 @@ graph TD
       ZUSTAND --> DEXIE
 
       DEXIE["💾 Dexie.js — IndexedDB"]
-      DEXIE --- TABLES["profiles · designs · furniture · wishlists · enquiries"]
+      DEXIE --- TABLES["profiles · designs · furniture · wishlists · enquiries · roomTemplates · userRoomTemplates"]
     end
   end
 
